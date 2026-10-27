@@ -1,0 +1,47 @@
+{
+  "name": "obsidian-slim-bar",
+  "version": "1.0.0",
+  "description": "Ultra-slim Always-on-Top floating scratchpad & quick-capture bar synced directly with your Obsidian Vault.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win portable",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [
+    "obsidian",
+    "sticky-notes",
+    "always-on-top",
+    "markdown",
+    "floating-bar",
+    "productivity",
+    "windows"
+  ],
+  "author": "Polliana Pavloski",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QueenOverlord/obsidian-slim-bar.git"
+  },
+  "homepage": "https://github.com/QueenOverlord/obsidian-slim-bar#readme",
+  "bugs": {
+    "url": "https://github.com/QueenOverlord/obsidian-slim-bar/issues"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.keystone.obsidianslimbar",
+    "productName": "ObsidianSlimBar",
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "ObsidianSlimBar-Portable.exe"
+    }
+  }
+}

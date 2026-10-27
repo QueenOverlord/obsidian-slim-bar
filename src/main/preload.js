@@ -1,0 +1,40 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('slimBarAPI', {
+  // Initial State & Settings
+  getState: () => ipcRenderer.invoke('app:get-state'),
+  updateSettings: (partial) => ipcRenderer.invoke('settings:update', partial),
+  completeOnboarding: (payload) => ipcRenderer.invoke('settings:complete-onboarding', payload),
+
+  // Window Controls (Stick/Unstick, Collapse/Expand, Opacity, Hide/Quit)
+  togglePin: () => ipcRenderer.invoke('window:toggle-pin'),
+  toggleExpand: (forceState) => ipcRenderer.invoke('window:toggle-expand', forceState),
+  setOpacity: (opacity) => ipcRenderer.invoke('window:set-opacity', opacity),
+  minimizeOrHide: () => ipcRenderer.invoke('window:hide'),
+  quitApp: () => ipcRenderer.invoke('window:quit'),
+
+  // Single .md Note Operations
+  readNote: () => ipcRenderer.invoke('vault:read-note'),
+  writeNote: (content) => ipcRenderer.invoke('vault:write-note', content),
+  appendQuickLine: (text) => ipcRenderer.invoke('vault:append-quick-line', text),
+  browseNoteFile: () => ipcRenderer.invoke('vault:browse-note'),
+  setNotePath: (rawPath) => ipcRenderer.invoke('vault:set-note-path', rawPath),
+  openInObsidian: () => ipcRenderer.invoke('vault:open-in-obsidian'),
+
+  // Events pushed from Main Process
+  onStateChanged: (callback) => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on('window:state-changed', listener);
+    return () => ipcRenderer.removeListener('window:state-changed', listener);
+  },
+  onExternalNoteUpdated: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on('vault:external-update', listener);
+    return () => ipcRenderer.removeListener('vault:external-update', listener);
+  },
+  onFocusQuickInput: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('ui:focus-input', listener);
+    return () => ipcRenderer.removeListener('ui:focus-input', listener);
+  },
+});

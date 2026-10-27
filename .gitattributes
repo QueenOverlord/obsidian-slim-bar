@@ -1,0 +1,5 @@
+# Windows batch files must keep CRLF line endings, even in "Download ZIP"
+*.bat text eol=crlf
+
+# Pre-built third-party bundle: don't count it in GitHub's language stats
+src/renderer/vendor/** linguist-vendored

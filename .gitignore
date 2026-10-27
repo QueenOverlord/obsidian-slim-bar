@@ -1,0 +1,26 @@
+# Dependencies & Portable Runtime
+node_modules/
+runtime/
+
+# Build outputs
+dist/
+out/
+release/
+
+# Local user settings & scratchpad fallback
+settings.local.json
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local source backups (kept on disk, never published)
+src.backup*/
+
+# Leftover runtime download from launch-windows.bat
+electron-win32.zip
+
+# Editor folders
+.vscode/
+.idea/
