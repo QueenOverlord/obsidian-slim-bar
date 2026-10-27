@@ -1,6 +1,6 @@
 {
   "name": "obsidian-slim-bar",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ultra-slim Always-on-Top floating scratchpad & quick-capture bar synced directly with your Obsidian Vault.",
   "main": "src/main/main.js",
   "scripts": {

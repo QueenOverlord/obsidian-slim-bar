@@ -29,6 +29,9 @@
       <symbol id="i-divider" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="m8 8 4-4 4 4"/><path d="m16 16-4 4-4-4"/></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
       <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></symbol>
     </defs>
   </svg>
 
@@ -148,7 +151,28 @@
           </div>
         </div>
 
-        <!-- CARD 3: START WITH WINDOWS -->
+        <!-- CARD 3: THEME (applies instantly; Auto follows Windows light/dark mode) -->
+        <div class="setup-card">
+          <div class="card-title-row theme-row">
+            <span class="card-title">Theme</span>
+            <div id="theme-switch" class="md-mode-switch theme-switch" role="radiogroup" aria-label="Theme">
+              <button class="mode-switch-btn" data-theme="dark" type="button" role="radio" title="Dark">
+                <svg class="icon icon-sm"><use href="#i-moon"/></svg>
+                <span>Dark</span>
+              </button>
+              <button class="mode-switch-btn" data-theme="light" type="button" role="radio" title="Light">
+                <svg class="icon icon-sm"><use href="#i-sun"/></svg>
+                <span>Light</span>
+              </button>
+              <button class="mode-switch-btn" data-theme="system" type="button" role="radio" title="Follow Windows light/dark mode">
+                <svg class="icon icon-sm"><use href="#i-monitor"/></svg>
+                <span>Auto</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: START WITH WINDOWS -->
         <div class="setup-card startup-row">
           <label class="checkbox-label">
             <input id="checkbox-open-at-login" type="checkbox" checked />

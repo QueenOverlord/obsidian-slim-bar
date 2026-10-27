@@ -9,6 +9,7 @@ const {
   Tray,
   Menu,
   nativeImage,
+  nativeTheme,
 } = require('electron');
 const { SettingsStore } = require('./settings-store');
 const { VaultBridge } = require('./vault-bridge');
@@ -179,6 +180,11 @@ function applyWindowsAutoStart(enable) {
       console.warn('[AutoStart] Startup folder script warning:', err.message);
     }
   }
+}
+
+// Drives prefers-color-scheme in the page, so the CSS picks the Dark or Light tokens
+function applyTheme(theme) {
+  nativeTheme.themeSource = ['dark', 'light', 'system'].includes(theme) ? theme : 'system';
 }
 
 function togglePinState() {
@@ -366,6 +372,7 @@ function setupIpcHandlers() {
     const updated = settingsStore.update(partial);
     if ('isPinned' in partial) applyPinState(Boolean(updated.isPinned));
     if ('openAtLogin' in partial) applyWindowsAutoStart(Boolean(updated.openAtLogin));
+    if ('theme' in partial) applyTheme(updated.theme);
     if ('universalHotkey' in partial || 'hotkeyTogglePin' in partial) {
       registerGlobalHotkeys();
     }
@@ -458,6 +465,7 @@ function onReady() {
     }
   });
 
+  applyTheme(settingsStore.get('theme'));
   applyWindowsAutoStart(Boolean(settingsStore.get('openAtLogin')));
   setupIpcHandlers();
   createMainWindow();

@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS = {
   universalHotkey: 'Alt+Space', // Universal Hotkey to summon/open/toggle anywhere
   hotkeyTogglePin: 'Alt+Shift+P',
 
+  // Look: 'system' follows Windows light/dark mode | 'dark' | 'light'
+  theme: 'system',
+
   // Window Behavior & State
   isPinned: true,             // Always on Top
   isExpanded: false,          // Starts as Slim Bar once configured

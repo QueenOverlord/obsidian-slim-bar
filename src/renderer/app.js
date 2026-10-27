@@ -32,6 +32,7 @@
   const recorderHint = document.getElementById('recorder-hint');
   const btnResetHotkey = document.getElementById('btn-reset-hotkey');
 
+  const themeButtons = document.querySelectorAll('#theme-switch [data-theme]');
   const checkboxOpenAtLogin = document.getElementById('checkbox-open-at-login');
   const btnSaveSetup = document.getElementById('btn-save-setup');
   const btnQuitApp = document.getElementById('btn-quit-app');
@@ -136,6 +137,14 @@
     renderHotkeyCaps(recordedHotkey);
     quickCaptureInput.title = `Type + Enter to add a line (${recordedHotkey} to expand)`;
     btnExpand.title = `Expand / collapse (${recordedHotkey})`;
+
+    // 5. Theme picker (the colors themselves switch in CSS via prefers-color-scheme)
+    const theme = settings.theme || 'system';
+    themeButtons.forEach((btn) => {
+      const isActive = btn.dataset.theme === theme;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', String(isActive));
+    });
 
     checkboxOpenAtLogin.checked = Boolean(settings.openAtLogin);
     const savedOpacity =
@@ -296,6 +305,14 @@
       recordedHotkey = 'Alt+Space';
       renderHotkeyCaps(recordedHotkey);
       stopRecordingHotkey('Reset');
+    });
+
+    // 7b. Theme: applies and saves instantly, no need to press Save
+    themeButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const updated = await api.updateSettings({ theme: btn.dataset.theme });
+        applyState(updated, false);
+      });
     });
 
     // 8. Save Visual Setup Panel

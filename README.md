@@ -9,6 +9,7 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.
 - **Opacity slider:** fade the bar so it doesn't cover what you're working on.
+- **Light and dark themes:** pick Dark, Light, or Auto to follow Windows.
 - **Starts with Windows** (optional), so the hotkey is always ready.
 
 > [!NOTE]
@@ -69,7 +70,6 @@ Your Obsidian note is never deleted.
 
 - The default hotkey `Alt+Space` clashes with the Windows window menu and PowerToys Run. Pick a different one in Setup (for example `Ctrl+Alt+Space`).
 - If the hotkey you choose is already taken by another app, it silently won't work. Try another combination.
-- Light theme is on the way; for now there's only the dark look.
 
 ---
 
@@ -103,7 +103,7 @@ obsidian-slim-bar/
     │   └── preload.js         # Safe bridge between the window and the main process
     └── renderer/
         ├── index.html         # Slim bar, setup panel, editor
-        ├── styles.css         # All colors live in tokens at the top
+        ├── styles.css         # All colors live in tokens at the top (Dark + Light)
         ├── markdown-helper.js # CodeMirror editor, live preview, toolbar actions
         ├── app.js             # UI state, hotkey recorder, events
         └── vendor/

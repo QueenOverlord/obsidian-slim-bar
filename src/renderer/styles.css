@@ -1,9 +1,14 @@
-/* ==================== DESIGN TOKENS (future Dark theme) ==================== */
-/* Every color in this file comes from here, so a theme is just one more token block. */
+/* ==================== DESIGN TOKENS ==================== */
+/* Every color in this file comes from here. Dark is the default block; Light overrides it below.
+   The main process picks the theme with nativeTheme.themeSource (dark / light / follow Windows),
+   which drives prefers-color-scheme, so "Auto" switches live with Windows. */
 :root {
+  color-scheme: dark;
+
   --bg-primary: #16161e;
   --bg-secondary: #1c1d26;
   --bg-elevated: #24252f;
+  --bg-raised: #24252f;
   --bg-input: #1c1d26;
   --bg-hover: rgba(255, 255, 255, 0.06);
   --bg-hover-soft: rgba(255, 255, 255, 0.025);
@@ -34,10 +39,65 @@
   --danger-soft: rgba(239, 68, 68, 0.14);
   --danger-text: #fca5a5;
 
+  --scrollbar: rgba(255, 255, 255, 0.14);
+  --scrollbar-hover: rgba(255, 255, 255, 0.26);
+  --slider-thumb: #e4e4ef;
+  --slider-thumb-hover: #ffffff;
+  --shadow-thumb: rgba(0, 0, 0, 0.45);
+  --shadow-pill: rgba(0, 0, 0, 0.25);
+
   --radius-bar: 10px;
   --radius: 6px;
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', Inter, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Cascadia Code', 'Consolas', 'JetBrains Mono', monospace;
+}
+
+/* Light: warm paper surfaces, graphite text, a deeper purple so it reads on white */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --bg-primary: #fbfaf7;
+    --bg-secondary: #f2f1ed;
+    --bg-elevated: #e7e5df;
+    --bg-raised: #ffffff;
+    --bg-input: #f2f1ed;
+    --bg-hover: rgba(24, 24, 40, 0.06);
+    --bg-hover-soft: rgba(24, 24, 40, 0.03);
+
+    --border-subtle: rgba(24, 24, 40, 0.09);
+    --border-strong: rgba(24, 24, 40, 0.18);
+    --border-focus: #7c3aed;
+
+    --accent: #7c3aed;
+    --accent-hover: #6d28d9;
+    --accent-soft: rgba(124, 58, 237, 0.1);
+    --accent-ring: rgba(124, 58, 237, 0.32);
+    --accent-text: #6d28d9;
+    --accent-text-2: #7c3aed;
+    --selection: rgba(124, 58, 237, 0.18);
+    --on-accent: #ffffff;
+
+    --text-main: #1f1f29;
+    --text-muted: #5c5d6c;
+    --text-dim: #8b8c99;
+    --text-code: #a21caf;
+
+    --success: #059669;
+    --success-ring: rgba(5, 150, 105, 0.25);
+    --warning: #d97706;
+    --warning-soft: rgba(217, 119, 6, 0.12);
+    --danger: #dc2626;
+    --danger-soft: rgba(220, 38, 38, 0.1);
+    --danger-text: #b91c1c;
+
+    --scrollbar: rgba(24, 24, 40, 0.16);
+    --scrollbar-hover: rgba(24, 24, 40, 0.3);
+    --slider-thumb: #ffffff;
+    --slider-thumb-hover: #ffffff;
+    --shadow-thumb: rgba(24, 24, 40, 0.25);
+    --shadow-pill: rgba(24, 24, 40, 0.12);
+  }
 }
 
 * {
@@ -88,12 +148,12 @@ input:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--scrollbar);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.26);
+  background: var(--scrollbar-hover);
 }
 
 ::-webkit-scrollbar-thumb:active {
@@ -439,7 +499,7 @@ body.mode-slim .expanded-workspace {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  background: var(--bg-elevated);
+  background: var(--bg-raised);
   border: 1px solid var(--border-strong);
   border-radius: 8px;
 }
@@ -483,8 +543,9 @@ body.mode-slim .expanded-workspace {
 }
 
 .mode-switch-btn.active {
-  background: var(--bg-elevated);
+  background: var(--bg-raised);
   color: var(--text-main);
+  box-shadow: 0 1px 2px var(--shadow-pill);
 }
 
 @media (max-width: 290px) {
@@ -878,6 +939,17 @@ kbd {
   color: var(--text-muted);
 }
 
+/* Theme picker: title on the left, Dark / Light / Auto switch on the right */
+.theme-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.theme-switch {
+  background: var(--bg-primary);
+}
+
 .setup-footer {
   margin-top: auto;
   padding-top: 4px;
@@ -970,16 +1042,16 @@ kbd {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--text-main);
+  background: var(--slider-thumb);
   border: 2px solid var(--accent);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 1px 3px var(--shadow-thumb);
   cursor: grab;
   transition: transform 0.1s ease, background 0.1s ease;
 }
 
 .opacity-control input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  background: #ffffff;
+  background: var(--slider-thumb-hover);
 }
 
 .opacity-control input[type="range"]::-webkit-slider-thumb:active {
