@@ -874,6 +874,7 @@ body.mode-slim .expanded-workspace {
 }
 
 .setup-card {
+  container: setup / inline-size;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -1069,6 +1070,44 @@ kbd {
 
 .hotkey-recorder-box.recording .recorder-hint-wrap {
   color: var(--warning);
+}
+
+.recorder-hint-wrap.is-ok { color: var(--success); }
+.recorder-hint-wrap.is-error { color: var(--danger-text); }
+
+.hotkey-recorder-box.has-error {
+  border-color: var(--danger);
+}
+
+/* One row per shortcut: name on the left, recorder + reset on the right */
+.hotkey-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hotkey-row .hotkey-recorder-row {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.hotkey-name {
+  width: 92px;
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.icon-only-btn {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+
+@container setup (max-width: 360px) {
+  .hotkey-row { flex-direction: column; align-items: stretch; gap: 4px; }
+  .hotkey-name { width: auto; }
 }
 
 /* Start with Windows */

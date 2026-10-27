@@ -27,7 +27,7 @@ Windows 10 and 11 only for now.
    - If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. This appears because the installer isn't code-signed, as with most free open-source apps.
 3. The **Setup** panel opens:
    1. **Note:** click **Browse** and pick the `.md` file in your vault you want to write to.
-   2. **Hotkey:** click the box and press the shortcut you want.
+   2. **Shortcuts:** the defaults are `Ctrl+Alt+Space` (open the bar) and `Ctrl+Alt+Enter` (quick capture). To change one, click its box and press the new keys. It's tested and saved right away. If another app already uses it, you'll see a red message and your old shortcut keeps working.
    3. **Start with Windows:** leave it on. The app then starts quietly in the tray at login, so the hotkey shows the bar instantly.
    4. Click **Save**.
 
@@ -39,13 +39,14 @@ You'll find it in the Start Menu as **Obsidian Slim Bar**.
 
 | Action | How |
 |---|---|
-| Show / expand / collapse the bar | Your hotkey (default `Alt+Space`) |
+| Show / expand / collapse the bar | `Ctrl+Alt+Space` (changeable) |
+| Quick capture: type one line from anywhere, then it gets out of the way | `Ctrl+Alt+Enter` (changeable), type, `Enter` |
 | Add a line to your note | Type in the bar, press `Enter` |
 | Open the full editor | Chevron button, or `↓` in the quick-capture box |
 | Collapse back to the slim bar | `Esc` in the editor |
 | Pin / unpin on top | Pin button, or `Alt+Shift+P` |
 | Open the note in Obsidian | Arrow button in the bar |
-| Change note, hotkey or theme | Click the note name, or the settings button |
+| Change note, shortcuts or theme | Click the note name, or the settings button |
 | Hide to the tray | Minus button (the tray icon brings it back) |
 | Quit completely | Tray icon → **Quit Completely**, or **Quit** in Setup |
 
@@ -64,13 +65,6 @@ Quit the app from the tray icon, then run the new `Setup.exe` from the latest re
 3. Optional: delete your settings in `%APPDATA%\obsidian-slim-bar`.
 
 Your Obsidian note is never deleted.
-
----
-
-## Known issues
-
-- The default hotkey `Alt+Space` clashes with the Windows window menu and PowerToys Run. Pick a different one in Setup (for example `Ctrl+Alt+Space`).
-- If the hotkey you choose is already taken by another app, it silently won't work. Try another combination.
 
 ---
 

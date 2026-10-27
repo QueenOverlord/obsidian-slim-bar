@@ -11,7 +11,8 @@ const DEFAULT_SETTINGS = {
 
   // System & Startup Behavior (LanguageTool style)
   openAtLogin: true,          // Launch automatically when Windows starts
-  universalHotkey: 'Alt+Space', // Universal Hotkey to summon/open/toggle anywhere
+  universalHotkey: 'Ctrl+Alt+Space',     // Open bar: summon / expand / collapse from anywhere
+  quickCaptureHotkey: 'Ctrl+Alt+Enter', // Quick capture: slim bar only, type + Enter, then back
   hotkeyTogglePin: 'Alt+Shift+P',
 
   // Look: 'system' (Auto, follows Windows) | 'dark' | 'light' | 'dracula' | 'solarized-light' | 'custom'
@@ -45,6 +46,8 @@ class SettingsStore {
       if (fs.existsSync(this.settingsFile)) {
         const raw = fs.readFileSync(this.settingsFile, 'utf-8');
         const parsed = JSON.parse(raw);
+        // Old default Alt+Space clashes with the Windows window menu and PowerToys Run
+        if (parsed.universalHotkey === 'Alt+Space') parsed.universalHotkey = DEFAULT_SETTINGS.universalHotkey;
         return { ...DEFAULT_SETTINGS, ...parsed };
       }
     } catch (err) {

@@ -42,7 +42,7 @@
       </div>
 
       <!-- Active .md Note (Click to open Setup) -->
-      <button id="btn-note-badge" class="note-pill no-drag" title="Change note or hotkey">
+      <button id="btn-note-badge" class="note-pill no-drag" title="Change note, shortcuts or theme">
         <span id="vault-status-dot" class="status-dot disconnected"></span>
         <span id="active-note-name" class="note-name">Select a note</span>
       </button>
@@ -94,7 +94,7 @@
         <div class="panel-header">
           <div>
             <h3>Setup</h3>
-            <p class="panel-subtitle">Pick a note and a hotkey.</p>
+            <p class="panel-subtitle">Pick a note, shortcuts and a theme.</p>
           </div>
           <button id="btn-close-setup" class="icon-btn" title="Close">
             <svg class="icon"><use href="#i-x"/></svg>
@@ -124,27 +124,42 @@
           <div id="path-error-msg" class="error-msg hidden"></div>
         </div>
 
-        <!-- CARD 2: UNIVERSAL HOTKEY RECORDER -->
+        <!-- CARD 2: GLOBAL SHORTCUTS (each is tested and saved as soon as you press it) -->
         <div class="setup-card">
           <div class="card-title-row">
             <span class="step-badge">2</span>
-            <label class="card-title">Hotkey</label>
+            <span class="card-title">Shortcuts</span>
           </div>
-          <p class="card-help">Click the box, then press your shortcut.</p>
-          <div class="hotkey-recorder-row">
-            <button id="btn-record-hotkey" class="hotkey-recorder-box" type="button">
-              <span id="hotkey-badges" class="hotkey-badges">
-                <kbd>Alt</kbd> + <kbd>Space</kbd>
-              </span>
-              <span class="recorder-hint-wrap">
-                <svg class="icon icon-sm"><use href="#i-keyboard"/></svg>
-                <span id="recorder-hint" class="recorder-hint">Click to change</span>
-              </span>
-            </button>
-            <button id="btn-reset-hotkey" class="secondary-btn" type="button" title="Reset to Alt+Space">
-              <svg class="icon"><use href="#i-reset"/></svg>
-              <span>Reset</span>
-            </button>
+          <p class="card-help">Click a box, then press your shortcut. It's saved right away.</p>
+          <div class="hotkey-row">
+            <span class="hotkey-name">Open bar</span>
+            <div class="hotkey-recorder-row">
+              <button class="hotkey-recorder-box" data-hotkey="universalHotkey" type="button">
+                <span class="hotkey-badges"></span>
+                <span class="recorder-hint-wrap">
+                  <svg class="icon icon-sm"><use href="#i-keyboard"/></svg>
+                  <span class="recorder-hint">Click to change</span>
+                </span>
+              </button>
+              <button class="secondary-btn icon-only-btn" data-hotkey-reset="universalHotkey" type="button" title="Reset to default">
+                <svg class="icon"><use href="#i-reset"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="hotkey-row">
+            <span class="hotkey-name">Quick capture</span>
+            <div class="hotkey-recorder-row">
+              <button class="hotkey-recorder-box" data-hotkey="quickCaptureHotkey" type="button">
+                <span class="hotkey-badges"></span>
+                <span class="recorder-hint-wrap">
+                  <svg class="icon icon-sm"><use href="#i-keyboard"/></svg>
+                  <span class="recorder-hint">Click to change</span>
+                </span>
+              </button>
+              <button class="secondary-btn icon-only-btn" data-hotkey-reset="quickCaptureHotkey" type="button" title="Reset to default">
+                <svg class="icon"><use href="#i-reset"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 

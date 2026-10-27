@@ -28,10 +28,8 @@
   const btnBrowseNote = document.getElementById('btn-browse-note');
   const pathErrorMsg = document.getElementById('path-error-msg');
 
-  const btnRecordHotkey = document.getElementById('btn-record-hotkey');
-  const hotkeyBadges = document.getElementById('hotkey-badges');
-  const recorderHint = document.getElementById('recorder-hint');
-  const btnResetHotkey = document.getElementById('btn-reset-hotkey');
+  const hotkeyBoxes = document.querySelectorAll('[data-hotkey]');
+  const hotkeyResetButtons = document.querySelectorAll('[data-hotkey-reset]');
 
   const themeSwatches = document.querySelectorAll('#theme-grid [data-theme-pick]');
   const customThemeEditor = document.getElementById('custom-theme-editor');
@@ -58,8 +56,7 @@
     onEscape: () => api.toggleExpand(false),
   });
 
-  let isRecordingHotkey = false;
-  let recordedHotkey = 'Alt+Space';
+  let recordingBox = null;
   let saveTimeout = null;
   let customSaveTimeout = null;
   let customTheme = null;
@@ -101,11 +98,23 @@
     btnModeNormal.classList.toggle('active', !isOrigin);
   }
 
-  function renderHotkeyCaps(accelerator) {
-    const parts = (accelerator || 'Alt+Space').split('+');
-    hotkeyBadges.innerHTML = parts
-      .map((p) => `<kbd>${p.replace('CommandOrControl', 'Ctrl')}</kbd>`)
-      .join(' + ');
+  function renderHotkeyCaps(box, accelerator) {
+    const badges = box.querySelector('.hotkey-badges');
+    badges.textContent = '';
+    (accelerator || '').split('+').filter(Boolean).forEach((part, i) => {
+      if (i > 0) badges.append(' + ');
+      const cap = document.createElement('kbd');
+      cap.textContent = part === 'Super' ? 'Win' : part;
+      badges.appendChild(cap);
+    });
+  }
+
+  function setRecorderHint(box, text, stateClass) {
+    box.title = stateClass === 'is-error' ? `${text}. Pick another shortcut.` : '';
+    const wrap = box.querySelector('.recorder-hint-wrap');
+    wrap.classList.remove('is-ok', 'is-error');
+    if (stateClass) wrap.classList.add(stateClass);
+    box.querySelector('.recorder-hint').textContent = text;
   }
 
   function applyState(state, forceContentReload = false) {
@@ -152,11 +161,17 @@
       }
     }
 
-    // 4. Universal Hotkey & Startup settings
-    recordedHotkey = settings.universalHotkey || 'Alt+Space';
-    renderHotkeyCaps(recordedHotkey);
-    quickCaptureInput.title = `Type + Enter to add a line (${recordedHotkey} to expand)`;
-    btnExpand.title = `Expand / collapse (${recordedHotkey})`;
+    // 4. Global shortcuts: each box shows the saved shortcut, or why it isn't working
+    const hotkeyErrors = state.hotkeyErrors || {};
+    hotkeyBoxes.forEach((box) => {
+      if (box === recordingBox) return;
+      const error = hotkeyErrors[box.dataset.hotkey];
+      renderHotkeyCaps(box, settings[box.dataset.hotkey]);
+      box.classList.toggle('has-error', Boolean(error));
+      setRecorderHint(box, error || 'Click to change', error ? 'is-error' : null);
+    });
+    quickCaptureInput.title = `Type + Enter to add a line (${settings.universalHotkey} to expand)`;
+    btnExpand.title = `Expand / collapse (${settings.universalHotkey})`;
 
     // 5. Theme picker + Custom theme editor
     const theme = settings.theme || 'system';
@@ -215,31 +230,81 @@
     wordCounter.textContent = `${words} words · ${lineCount} lines`;
   }
 
-  function keyEventToAccelerator(e) {
-    const modifiers = [];
-    if (e.ctrlKey || e.metaKey) modifiers.push('CommandOrControl');
-    if (e.altKey) modifiers.push('Alt');
-    if (e.shiftKey) modifiers.push('Shift');
+  // Physical keys (e.code), so the shortcut is the same on any keyboard layout (ABNT2, US, …)
+  const CODE_KEYS = {
+    Space: 'Space', Enter: 'Enter', NumpadEnter: 'Enter', Tab: 'Tab', Backspace: 'Backspace',
+    Delete: 'Delete', Insert: 'Insert', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown',
+    ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right',
+    Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';',
+    Quote: "'", Comma: ',', Period: '.', Slash: '/', Backquote: '`',
+    NumpadAdd: 'numadd', NumpadSubtract: 'numsub', NumpadMultiply: 'nummult',
+    NumpadDivide: 'numdiv', NumpadDecimal: 'numdec',
+  };
 
-    const ignoredKeys = ['Control', 'Alt', 'Shift', 'Meta', 'OS'];
-    if (ignoredKeys.includes(e.key)) {
-      return null;
+  function keyFromCode(code) {
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^Digit[0-9]$/.test(code)) return code.slice(5);
+    if (/^Numpad[0-9]$/.test(code)) return `num${code.slice(6)}`;
+    if (/^F([1-9]|1[0-9]|2[0-4])$/.test(code)) return code;
+    return CODE_KEYS[code] || null;
+  }
+
+  function heldModifiers(e) {
+    const mods = [];
+    if (e.ctrlKey) mods.push('Ctrl');
+    if (e.altKey) mods.push('Alt');
+    if (e.shiftKey) mods.push('Shift');
+    if (e.metaKey) mods.push('Super');
+    return mods;
+  }
+
+  // -> { accelerator } when complete, { waiting } while only modifiers are held, or { error }
+  function readHotkey(e) {
+    const mods = heldModifiers(e);
+    if (['Control', 'Alt', 'AltGraph', 'Shift', 'Meta', 'OS'].includes(e.key)) return { waiting: mods };
+
+    const key = keyFromCode(e.code);
+    if (!key) return { error: "This key can't be used" };
+    // Shift alone would block capital letters, so a shortcut needs Ctrl, Alt or Win (F-keys can go alone)
+    if (!/^F\d+$/.test(key) && !mods.some((m) => m !== 'Shift')) return { error: 'Add Ctrl, Alt or Win' };
+    return { accelerator: [...mods, key].join('+') };
+  }
+
+  async function startRecording(box) {
+    if (recordingBox === box) return;
+    if (recordingBox) await stopRecording(false);
+    recordingBox = box;
+    box.classList.add('recording');
+    box.classList.remove('has-error');
+    renderHotkeyCaps(box, '');
+    setRecorderHint(box, 'Press keys… (Esc cancels)');
+    await api.suspendHotkeys();
+  }
+
+  async function stopRecording(resume = true) {
+    if (!recordingBox) return;
+    recordingBox.classList.remove('recording');
+    recordingBox = null;
+    if (resume) applyState(await api.resumeHotkeys(), false);
+  }
+
+  async function saveRecordedHotkey(box, accelerator) {
+    recordingBox = null;
+    box.classList.remove('recording');
+    renderHotkeyCaps(box, accelerator);
+    setRecorderHint(box, 'Checking…');
+
+    const res = await api.setHotkey(box.dataset.hotkey, accelerator);
+    if (res && res.ok) {
+      applyState(res.state, false);
+      setRecorderHint(box, 'Saved', 'is-ok');
+      return;
     }
-
-    let keyName = e.key;
-    if (e.code === 'Space' || keyName === ' ') {
-      keyName = 'Space';
-    } else if (keyName.length === 1) {
-      keyName = keyName.toUpperCase();
-    } else if (keyName.startsWith('Arrow')) {
-      keyName = keyName.replace('Arrow', '');
-    }
-
-    if (modifiers.length === 0 && !/^F\d+$/.test(keyName)) {
-      modifiers.push('Alt');
-    }
-
-    return [...modifiers, keyName].join('+');
+    // Not saved: the old shortcut is still active; show the rejected one with the reason
+    applyState(await api.resumeHotkeys(), false);
+    renderHotkeyCaps(box, accelerator);
+    box.classList.add('has-error');
+    setRecorderHint(box, (res && res.error) || 'Not saved', 'is-error');
   }
 
   async function openVisualSetupPanel() {
@@ -276,7 +341,7 @@
     btnSettings.addEventListener('click', openVisualSetupPanel);
 
     btnCloseSetup.addEventListener('click', () => {
-      stopRecordingHotkey();
+      stopRecording();
       setupPanel.classList.add('hidden');
     });
 
@@ -296,40 +361,56 @@
       }
     });
 
-    // 7. Interactive Universal Hotkey Recorder
-    btnRecordHotkey.addEventListener('click', () => {
-      isRecordingHotkey = true;
-      btnRecordHotkey.classList.add('recording');
-      recorderHint.textContent = 'Press keys…';
-      btnRecordHotkey.focus();
+    // 7. Shortcut recorders: click, press keys, saved right away (or told why not)
+    hotkeyBoxes.forEach((box) => {
+      box.addEventListener('click', () => startRecording(box));
+
+      box.addEventListener('keydown', (e) => {
+        if (box !== recordingBox) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.key === 'Escape' && heldModifiers(e).length === 0) {
+          stopRecording();
+          return;
+        }
+
+        const read = readHotkey(e);
+        if (read.waiting) {
+          renderHotkeyCaps(box, [...read.waiting, '…'].join('+'));
+        } else if (read.error) {
+          setRecorderHint(box, read.error, 'is-error');
+        } else {
+          saveRecordedHotkey(box, read.accelerator);
+        }
+      });
+
+      // Releasing a modifier updates the live preview
+      box.addEventListener('keyup', (e) => {
+        if (box !== recordingBox) return;
+        const mods = heldModifiers(e);
+        renderHotkeyCaps(box, mods.length ? [...mods, '…'].join('+') : '');
+      });
+
+      box.addEventListener('blur', () => {
+        if (box === recordingBox) stopRecording();
+      });
     });
 
-    btnRecordHotkey.addEventListener('keydown', (e) => {
-      if (!isRecordingHotkey) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (e.key === 'Escape') {
-        stopRecordingHotkey();
-        return;
-      }
-
-      const accel = keyEventToAccelerator(e);
-      if (accel) {
-        recordedHotkey = accel;
-        renderHotkeyCaps(recordedHotkey);
-        stopRecordingHotkey('Captured');
-      }
-    });
-
-    btnRecordHotkey.addEventListener('blur', () => {
-      if (isRecordingHotkey) stopRecordingHotkey();
-    });
-
-    btnResetHotkey.addEventListener('click', () => {
-      recordedHotkey = 'Alt+Space';
-      renderHotkeyCaps(recordedHotkey);
-      stopRecordingHotkey('Reset');
+    hotkeyResetButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.hotkeyReset;
+        const box = document.querySelector(`[data-hotkey="${key}"]`);
+        await stopRecording(false);
+        const res = await api.resetHotkey(key);
+        if (res && res.ok) {
+          applyState(res.state, false);
+          setRecorderHint(box, 'Reset to default', 'is-ok');
+        } else {
+          applyState(await api.resumeHotkeys(), false);
+          setRecorderHint(box, (res && res.error) || 'Not saved', 'is-error');
+        }
+      });
     });
 
     // 7b. Theme: applies and saves instantly, no need to press Save
@@ -370,7 +451,6 @@
 
       const updatedState = await api.completeOnboarding({
         activeNotePath: chosenPath,
-        universalHotkey: recordedHotkey || 'Alt+Space',
         openAtLogin: checkboxOpenAtLogin.checked,
       });
 
@@ -399,12 +479,15 @@
             quickCaptureInput.classList.remove('flash-saved');
             quickCaptureInput.placeholder = oldPlaceholder;
           }, 1200);
+          // Opened with the Quick capture shortcut: show "Saved" for a moment, then put the window back
+          setTimeout(() => api.quickCaptureDone(), 350);
         }
       } else if (e.key === 'ArrowDown' && !currentState.settings.isExpanded) {
         await api.toggleExpand(true);
         editor.focusEnd();
       } else if (e.key === 'Escape') {
         quickCaptureInput.blur();
+        api.quickCaptureDone();
       }
     });
 
@@ -476,6 +559,12 @@
       }
     });
 
+    api.onQuickCapture(() => {
+      setupPanel.classList.add('hidden');
+      quickCaptureInput.focus();
+      quickCaptureInput.select();
+    });
+
     api.onFocusQuickInput(() => {
       if (!setupPanel.classList.contains('hidden')) {
         inputNotePath.focus();
@@ -485,12 +574,6 @@
         quickCaptureInput.focus();
       }
     });
-  }
-
-  function stopRecordingHotkey(customHint) {
-    isRecordingHotkey = false;
-    btnRecordHotkey.classList.remove('recording');
-    recorderHint.textContent = customHint || 'Click to change';
   }
 
   init();

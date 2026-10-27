@@ -13,6 +13,13 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   setOpacity: (opacity) => ipcRenderer.invoke('window:set-opacity', opacity),
   minimizeOrHide: () => ipcRenderer.invoke('window:hide'),
   quitApp: () => ipcRenderer.invoke('window:quit'),
+  quickCaptureDone: () => ipcRenderer.invoke('window:quick-capture-done'),
+
+  // Global Shortcuts (recorder pauses them, then tests + saves the new one)
+  suspendHotkeys: () => ipcRenderer.invoke('hotkeys:suspend'),
+  resumeHotkeys: () => ipcRenderer.invoke('hotkeys:resume'),
+  setHotkey: (key, accelerator) => ipcRenderer.invoke('hotkeys:set', key, accelerator),
+  resetHotkey: (key) => ipcRenderer.invoke('hotkeys:reset', key),
 
   // Single .md Note Operations
   readNote: () => ipcRenderer.invoke('vault:read-note'),
@@ -37,5 +44,10 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
     const listener = () => callback();
     ipcRenderer.on('ui:focus-input', listener);
     return () => ipcRenderer.removeListener('ui:focus-input', listener);
+  },
+  onQuickCapture: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on('ui:quick-capture', listener);
+    return () => ipcRenderer.removeListener('ui:quick-capture', listener);
   },
 });

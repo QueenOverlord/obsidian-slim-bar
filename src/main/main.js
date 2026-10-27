@@ -10,7 +10,7 @@ const {
   Menu,
   nativeImage,
 } = require('electron');
-const { SettingsStore } = require('./settings-store');
+const { SettingsStore, DEFAULT_SETTINGS } = require('./settings-store');
 const { VaultBridge } = require('./vault-bridge');
 
 let mainWindow = null;
@@ -88,6 +88,9 @@ function createMainWindow() {
     e.preventDefault();
     mainWindow.hide();
   });
+
+  // Clicking away from a Quick capture puts the window back, like Enter does
+  mainWindow.on('blur', () => endQuickCapture());
 
   mainWindow.on('moved', saveWindowBounds);
   mainWindow.on('resized', () => {
@@ -236,66 +239,144 @@ function getFullStatePayload() {
   return {
     settings: settingsStore.getAll(),
     note: vaultBridge.readNote(),
+    hotkeyErrors,
   };
 }
 
+// What each global shortcut does, and the name shown in messages
+const HOTKEY_LABELS = {
+  universalHotkey: 'Open bar',
+  quickCaptureHotkey: 'Quick capture',
+  hotkeyTogglePin: 'Pin on top',
+};
+let hotkeyErrors = {};
+
+// Set while a Quick capture is open, so Enter / Esc / clicking away can put things back
+let quickCapture = null;
+
 /**
- * Registers the Universal Hotkey (default Alt+Space) so pressing it from ANYWHERE
- * in Windows immediately brings up the bar and focuses the editor.
+ * Open bar hotkey (default Ctrl+Alt+Space): pressing it from ANYWHERE in Windows
+ * brings up the bar, expands it and focuses the editor; pressing it again collapses it.
  */
+function summonBar() {
+  if (!mainWindow) return;
+  quickCapture = null;
+
+  const wasVisible = mainWindow.isVisible();
+  const wasFocused = mainWindow.isFocused();
+  const isExpanded = settingsStore.get('isExpanded');
+
+  // Case 1: Window was hidden or in background -> Summon to front, expand, and focus!
+  if (!wasVisible || !wasFocused) {
+    mainWindow.show();
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    applyPinState(Boolean(settingsStore.get('isPinned')));
+    setExpandedState(true);
+    mainWindow.focus();
+    mainWindow.webContents.send('ui:focus-input');
+    return;
+  }
+
+  // Case 2: Window is visible & focused, but collapsed -> Expand and focus editor!
+  if (!isExpanded) {
+    setExpandedState(true);
+    mainWindow.focus();
+    mainWindow.webContents.send('ui:focus-input');
+    return;
+  }
+
+  // Case 3: Window is already expanded & focused -> Collapse back into the Slim Bar!
+  setExpandedState(false);
+}
+
+/**
+ * Quick capture hotkey (default Ctrl+Alt+Enter): shows just the slim bar with the cursor in the
+ * one-line box. Enter saves and puts the window back the way it was; pressing it again cancels.
+ */
+function toggleQuickCapture() {
+  if (!mainWindow) return;
+  if (quickCapture && mainWindow.isVisible() && mainWindow.isFocused()) {
+    endQuickCapture();
+    return;
+  }
+
+  quickCapture = {
+    wasHidden: !mainWindow.isVisible(),
+    wasExpanded: Boolean(settingsStore.get('isExpanded')),
+  };
+  if (quickCapture.wasExpanded) setExpandedState(false);
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  applyPinState(Boolean(settingsStore.get('isPinned')));
+  mainWindow.focus();
+  mainWindow.webContents.send('ui:quick-capture');
+}
+
+function endQuickCapture() {
+  if (!quickCapture || !mainWindow) return;
+  const { wasHidden, wasExpanded } = quickCapture;
+  quickCapture = null;
+  if (wasHidden) {
+    mainWindow.hide();
+  } else if (wasExpanded) {
+    setExpandedState(true);
+  }
+}
+
+const HOTKEY_ACTIONS = {
+  universalHotkey: () => summonBar(),
+  quickCaptureHotkey: () => toggleQuickCapture(),
+  hotkeyTogglePin: () => togglePinState(),
+};
+
+// Registers every saved shortcut; any that fail are reported to the Setup panel via hotkeyErrors
 function registerGlobalHotkeys() {
   globalShortcut.unregisterAll();
   const settings = settingsStore.getAll();
+  hotkeyErrors = {};
 
-  const mainAccelerator = settings.universalHotkey || 'Alt+Space';
-  try {
-    const ok = globalShortcut.register(mainAccelerator, () => {
-      if (!mainWindow) return;
-
-      const wasVisible = mainWindow.isVisible();
-      const wasFocused = mainWindow.isFocused();
-      const isExpanded = settingsStore.get('isExpanded');
-
-      // Case 1: Window was hidden or in background -> Summon to front, expand, and focus!
-      if (!wasVisible || !wasFocused) {
-        mainWindow.show();
-        if (mainWindow.isMinimized()) mainWindow.restore();
-        applyPinState(Boolean(settingsStore.get('isPinned')));
-        setExpandedState(true);
-        mainWindow.focus();
-        mainWindow.webContents.send('ui:focus-input');
-        return;
-      }
-
-      // Case 2: Window is visible & focused, but collapsed -> Expand and focus editor!
-      if (!isExpanded) {
-        setExpandedState(true);
-        mainWindow.focus();
-        mainWindow.webContents.send('ui:focus-input');
-        return;
-      }
-
-      // Case 3: Window is already expanded & focused -> Collapse back into the Slim Bar!
-      setExpandedState(false);
-    });
-
-    if (!ok) {
-      console.warn('[GlobalHotkey] Shortcut already in use by another app:', mainAccelerator);
-    }
-  } catch (err) {
-    console.warn('[GlobalHotkey] Invalid universalHotkey:', mainAccelerator, err.message);
-  }
-
-  // Secondary Hotkey: Stick / Unstick Always-on-Top
-  if (settings.hotkeyTogglePin) {
+  Object.keys(HOTKEY_ACTIONS).forEach((key) => {
+    const accelerator = settings[key];
+    if (!accelerator) return;
     try {
-      globalShortcut.register(settings.hotkeyTogglePin, () => {
-        togglePinState();
-      });
+      if (!globalShortcut.register(accelerator, HOTKEY_ACTIONS[key])) {
+        hotkeyErrors[key] = 'Taken by another app';
+      }
     } catch (err) {
-      console.warn('[GlobalHotkey] Invalid hotkeyTogglePin:', err.message);
+      hotkeyErrors[key] = 'Not a valid shortcut';
     }
+  });
+}
+
+/**
+ * Tests a new shortcut before saving it. If Windows or another app already owns it,
+ * nothing is saved and the old shortcut keeps working.
+ */
+function trySetHotkey(key, accelerator) {
+  if (!(key in HOTKEY_ACTIONS) || !accelerator) return { ok: false, error: 'Not a valid shortcut' };
+
+  const settings = settingsStore.getAll();
+  const clash = Object.keys(HOTKEY_ACTIONS).find((k) => k !== key && settings[k] === accelerator);
+  if (clash) return { ok: false, error: `Already used for ${HOTKEY_LABELS[clash]}` };
+
+  globalShortcut.unregisterAll();
+  let isFree = false;
+  try {
+    isFree = globalShortcut.register(accelerator, () => {});
+  } catch (err) {
+    registerGlobalHotkeys();
+    return { ok: false, error: 'Not a valid shortcut' };
   }
+  if (!isFree) {
+    registerGlobalHotkeys();
+    return { ok: false, error: 'Taken by another app' };
+  }
+
+  globalShortcut.unregister(accelerator);
+  settingsStore.update({ [key]: accelerator });
+  registerGlobalHotkeys();
+  updateTrayMenu();
+  return { ok: true, state: getFullStatePayload() };
 }
 
 function createSystemTray() {
@@ -319,7 +400,7 @@ function updateTrayMenu() {
   const settings = settingsStore.getAll();
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: `Summon / Expand (${settings.universalHotkey || 'Alt+Space'})`,
+      label: `Open Bar (${settings.universalHotkey})`,
       click: () => {
         if (!mainWindow) return;
         mainWindow.show();
@@ -327,6 +408,10 @@ function updateTrayMenu() {
         mainWindow.focus();
         mainWindow.webContents.send('ui:focus-input');
       },
+    },
+    {
+      label: `Quick Capture (${settings.quickCaptureHotkey})`,
+      click: () => toggleQuickCapture(),
     },
     {
       label: settings.isExpanded ? 'Collapse to Slim Bar' : 'Show Slim Bar',
@@ -372,7 +457,7 @@ function setupIpcHandlers() {
     const updated = settingsStore.update(partial);
     if ('isPinned' in partial) applyPinState(Boolean(updated.isPinned));
     if ('openAtLogin' in partial) applyWindowsAutoStart(Boolean(updated.openAtLogin));
-    if ('universalHotkey' in partial || 'hotkeyTogglePin' in partial) {
+    if (Object.keys(HOTKEY_ACTIONS).some((key) => key in partial)) {
       registerGlobalHotkeys();
     }
     updateTrayMenu();
@@ -380,13 +465,12 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('settings:complete-onboarding', (_e, payload) => {
-    const { activeNotePath, universalHotkey, openAtLogin, quickCaptureFormat } = payload || {};
+    const { activeNotePath, openAtLogin, quickCaptureFormat } = payload || {};
     if (activeNotePath) {
       vaultBridge.setNotePath(activeNotePath);
     }
     const updated = settingsStore.update({
       isConfigured: true,
-      universalHotkey: universalHotkey || 'Alt+Space',
       openAtLogin: typeof openAtLogin === 'boolean' ? openAtLogin : true,
       quickCaptureFormat: quickCaptureFormat || 'bullet',
     });
@@ -396,11 +480,30 @@ function setupIpcHandlers() {
     return getFullStatePayload();
   });
 
+  // Hotkey recorder: pause every shortcut while recording, so the keys reach the recorder
+  ipcMain.handle('hotkeys:suspend', () => {
+    globalShortcut.unregisterAll();
+  });
+
+  ipcMain.handle('hotkeys:resume', () => {
+    registerGlobalHotkeys();
+    return getFullStatePayload();
+  });
+
+  ipcMain.handle('hotkeys:set', (_e, key, accelerator) => trySetHotkey(key, accelerator));
+
+  ipcMain.handle('hotkeys:reset', (_e, key) => trySetHotkey(key, DEFAULT_SETTINGS[key]));
+
+  ipcMain.handle('window:quick-capture-done', () => {
+    endQuickCapture();
+  });
+
   ipcMain.handle('window:toggle-pin', () => {
     return { isPinned: togglePinState() };
   });
 
   ipcMain.handle('window:toggle-expand', (_e, forceState) => {
+    quickCapture = null;
     return { isExpanded: setExpandedState(forceState) };
   });
 
