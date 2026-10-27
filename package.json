@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "dist": "electron-builder --win portable",
+    "dist": "electron-builder --win nsis --publish never",
+    "release": "electron-builder --win nsis --publish always",
     "pack": "electron-builder --dir"
   },
   "keywords": [
@@ -34,14 +35,38 @@
   },
   "build": {
     "appId": "com.keystone.obsidianslimbar",
-    "productName": "ObsidianSlimBar",
+    "productName": "Obsidian Slim Bar",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
     "win": {
       "target": [
-        "portable"
-      ]
+        "nsis"
+      ],
+      "icon": "build/icon.png"
     },
-    "portable": {
-      "artifactName": "ObsidianSlimBar-Portable.exe"
-    }
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Obsidian Slim Bar",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ObsidianSlimBar-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "QueenOverlord",
+        "repo": "obsidian-slim-bar",
+        "releaseType": "release"
+      }
+    ]
   }
 }

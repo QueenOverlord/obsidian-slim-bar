@@ -14,27 +14,22 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 > [!NOTE]
 > **This is a vibe-coded tool.** I built it with AI because I wanted a quick-capture bar for my own Obsidian workflow and couldn't find one I liked. It's small and simple, it does one job, and it's free for anyone to use. Issues and suggestions are welcome.
 
-Windows only for now. It runs from the downloaded folder; there is no installer yet.
+Windows 10 and 11 only for now.
 
 ---
 
-## Download and run
+## Install
 
-You don't need Node.js or any developer tools.
-
-1. On this page, click the green **Code** button, then **Download ZIP**.
-2. Unzip it somewhere permanent, for example `C:\Tools\obsidian-slim-bar`.
-   Keep it outside OneDrive or Dropbox; the app starts faster that way.
-3. Double-click **`launch-windows.bat`**.
-   - The first time, it downloads the Electron runtime (about 100 MB) into a `runtime` folder next to it. This takes a minute and only happens once.
-   - If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. This appears because the script isn't signed.
-4. The **Setup** panel opens:
+1. Go to the **[latest release](https://github.com/QueenOverlord/obsidian-slim-bar/releases/latest)** and download **`ObsidianSlimBar-Setup-x.x.x.exe`**.
+2. Double-click it. It installs in a few seconds, with no admin password, and opens the app.
+   - If Windows shows **"Windows protected your PC"**, click **More info → Run anyway**. This appears because the installer isn't code-signed, as with most free open-source apps.
+3. The **Setup** panel opens:
    1. **Note:** click **Browse** and pick the `.md` file in your vault you want to write to.
    2. **Hotkey:** click the box and press the shortcut you want.
-   3. **Start with Windows:** leave it on if you want the bar ready after every boot.
+   3. **Start with Windows:** leave it on. The app then starts quietly in the tray at login, so the hotkey shows the bar instantly.
    4. Click **Save**.
 
-Prefer git? Run `git clone https://github.com/QueenOverlord/obsidian-slim-bar.git` instead of downloading the ZIP, then do steps 3 and 4.
+You'll find it in the Start Menu as **Obsidian Slim Bar**.
 
 ---
 
@@ -58,15 +53,13 @@ If you haven't picked a note yet, the bar writes to a scratch file in its settin
 
 ## Update
 
-Download the new ZIP and replace the files in your folder. Keep the `runtime` folder so it doesn't download again. Your settings are stored separately, so you keep them.
+Quit the app from the tray icon, then run the new `Setup.exe` from the latest release. Your settings are kept.
 
 ## Uninstall
 
 1. Quit the app from the tray icon.
-2. Turn off **Start with Windows** first, or delete
-   `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\ObsidianSlimBar-AutoStart.vbs`
-3. Delete the app folder.
-4. Optional: delete your settings in `%APPDATA%\obsidian-slim-bar`.
+2. **Settings → Apps → Installed apps → Obsidian Slim Bar → Uninstall.**
+3. Optional: delete your settings in `%APPDATA%\obsidian-slim-bar`.
 
 Your Obsidian note is never deleted.
 
@@ -86,12 +79,20 @@ Your Obsidian note is never deleted.
 npm install
 npm start        # run from source
 npm run dev      # run with the --dev flag
-npm run dist     # build a portable .exe with electron-builder (run on Windows)
+npm run dist     # build the Windows installer into dist/ (run on Windows)
 ```
+
+**Run without installing:** download the ZIP, unzip it and double-click `launch-windows.bat`. It downloads the Electron runtime once into a `runtime` folder, then starts the app from source. It's slower to start than the installed app.
+
+**Releasing:** bump `version` in `package.json`, then push a matching tag (`git tag v1.0.1 && git push origin v1.0.1`). GitHub Actions builds the installer and attaches it to the release.
 
 ```text
 obsidian-slim-bar/
 ├── launch-windows.bat         # No-install launcher: downloads Electron once, then starts the app
+├── .github/workflows/
+│   └── release.yml            # Builds the installer on each version tag
+├── build/
+│   └── icon.png               # App icon
 ├── scripts/
 │   └── codemirror-entry.mjs   # How the bundled editor is built
 └── src/

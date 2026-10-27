@@ -18,10 +18,18 @@ let tray = null;
 let settingsStore = null;
 let vaultBridge = null;
 let isSavingBounds = false;
+let isQuitting = false;
 
-// Embedded 16x16 Obsidian-purple tray icon (base64 PNG)
+// Keep settings in %APPDATA%\obsidian-slim-bar for both the installed app and the source folder,
+// so installing doesn't lose your note path or hotkey
+app.setPath('userData', path.join(app.getPath('appData'), 'obsidian-slim-bar'));
+
+// Started by Windows at login: stay in the tray until the hotkey is pressed
+const startHidden = process.argv.includes('--hidden');
+
+// Embedded 32x32 tray icon (same artwork as build/icon.png)
 const TRAY_ICON_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABOSURBVDhPY2RgYPgPxFQBjAwMDP8pZRpA8h8fH2ZkZGRgYGBgQBfD5mB0NbiB2AxgxGYAqgF4DWBkZCTsAFwG4HUAqQZQPIBqAAMDAwB1jR8R92b7pAAAAABJRU5ErkJggg==';
+  'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABqklEQVR42u3X3yuDURzH8f0tS5IkKZkkLUkhSdLM1rJEkh+RCJEwI9e74IqUOleK/MiSn5n8aK2VkPyIlsTEcvvxnLun832yp3mec7VTr8vz2bvtZsdiSR+NM+P8ts04E2zWmYAR+Bbf1PXhfscXU8Ak7M8P9zXEma/hE+aKa0dM1r/bFJCE/hwTdW9MAUnotzBe+wqZSMBYTQwykYDR6meIooc/+O/hG1rbJGCk8glqG/NxGHX4lrhPAoYqHqAW2U8YFsC3xH0SMFh+B7VA14thAXxL3CcBA2W3EPkc91gej/0L39DaJgH99mvIRAL6Sq8gEwnoLYlCJhLQUxyB2uLoI0LrHynhd8U9EQnoKgpDbc57jdDae0oC3XcQ90QkoLPwEjKRgI6CM8hEAtrzT6HWZ7/AyvS9Ln53FOL9ZEhAW94J1BYGbnC8+qrLztILxPvJkIDW3COo9ZSEMNUY1mW46hzi/WRIQEvOAWQiAd7sPaaAJPQvWXPWrk0BSbTfCJ7MIPNk7sBcwb/fBu6MbaaASZiu15HLumVzWTdZk3UTRuBbfDP96NU6v2mHDU3T4o5OAAAAAElFTkSuQmCC';
 
 function createMainWindow() {
   const settings = settingsStore.getAll();
@@ -50,6 +58,7 @@ function createMainWindow() {
     resizable: true,
     hasShadow: true,
     skipTaskbar: false,
+    show: false,
     alwaysOnTop: Boolean(settings.isPinned),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -61,6 +70,18 @@ function createMainWindow() {
   applyPinState(Boolean(settings.isPinned));
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+
+  // Show only once the page is painted (no empty flash); the setup panel always shows
+  mainWindow.once('ready-to-show', () => {
+    if (!startHidden || !settings.isConfigured) mainWindow.show();
+  });
+
+  // Closing (Alt+F4) hides to the tray, so the app stays resident and the hotkey is instant
+  mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+    e.preventDefault();
+    mainWindow.hide();
+  });
 
   mainWindow.on('moved', saveWindowBounds);
   mainWindow.on('resized', () => {
@@ -110,7 +131,8 @@ function applyPinState(isPinned) {
 
 /**
  * Configures "Start Together with Windows" (like LanguageTool).
- * Works both for packaged .exe builds AND source/bat installs via Windows Startup folder.
+ * Installed app: Windows' own login item, started hidden in the tray.
+ * Source/bat installs: a silent .vbs in the Windows Startup folder.
  */
 function applyWindowsAutoStart(enable) {
   const openAtLogin = Boolean(enable);
@@ -119,13 +141,13 @@ function applyWindowsAutoStart(enable) {
       app.setLoginItemSettings({
         openAtLogin,
         path: process.execPath,
+        args: ['--hidden'],
       });
     }
   } catch (err) {
     console.warn('[AutoStart] LoginItemSettings warning:', err.message);
   }
 
-  // Also manage a silent Windows Startup VBS launcher so dev/folder mode auto-starts on Windows boot too
   if (process.platform === 'win32' && process.env.APPDATA) {
     const startupFolder = path.join(
       process.env.APPDATA,
@@ -138,7 +160,10 @@ function applyWindowsAutoStart(enable) {
     const vbsFile = path.join(startupFolder, 'ObsidianSlimBar-AutoStart.vbs');
 
     try {
-      if (openAtLogin && fs.existsSync(startupFolder)) {
+      // The installed app uses the login item above, so it removes the old .vbs launcher
+      if (app.isPackaged) {
+        if (fs.existsSync(vbsFile)) fs.unlinkSync(vbsFile);
+      } else if (openAtLogin && fs.existsSync(startupFolder)) {
         const projectRoot = path.resolve(__dirname, '..', '..');
         const batPath = path.join(projectRoot, 'launch-windows.bat');
         const targetCmd = app.isPackaged ? `"${process.execPath}"` : `"${batPath}"`;
@@ -411,7 +436,21 @@ function setupIpcHandlers() {
   ipcMain.handle('vault:open-in-obsidian', () => vaultBridge.openInObsidian());
 }
 
-app.whenReady().then(() => {
+// Only one copy may run: opening it again just brings up the existing bar
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  });
+  app.whenReady().then(onReady);
+}
+
+function onReady() {
+  if (process.platform === 'win32') app.setAppUserModelId('com.keystone.obsidianslimbar');
   settingsStore = new SettingsStore();
   vaultBridge = new VaultBridge(settingsStore, (updatedNoteData) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -424,10 +463,15 @@ app.whenReady().then(() => {
   createMainWindow();
   createSystemTray();
   registerGlobalHotkeys();
+}
+
+app.on('before-quit', () => {
+  isQuitting = true;
 });
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
+  // A second copy quits before it's ready, when globalShortcut can't be used yet
+  if (app.isReady()) globalShortcut.unregisterAll();
   if (vaultBridge) vaultBridge.dispose();
 });
 
