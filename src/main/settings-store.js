@@ -14,8 +14,9 @@ const DEFAULT_SETTINGS = {
   universalHotkey: 'Alt+Space', // Universal Hotkey to summon/open/toggle anywhere
   hotkeyTogglePin: 'Alt+Shift+P',
 
-  // Look: 'system' follows Windows light/dark mode | 'dark' | 'light'
+  // Look: 'system' (Auto, follows Windows) | 'dark' | 'light' | 'dracula' | 'solarized-light' | 'custom'
   theme: 'system',
+  customTheme: null,          // { bg, text, accent, h1, h2, h3, bold, italic, link, code, bullet, done } hex colors
 
   // Window Behavior & State
   isPinned: true,             // Always on Top

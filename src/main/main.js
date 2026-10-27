@@ -9,7 +9,6 @@ const {
   Tray,
   Menu,
   nativeImage,
-  nativeTheme,
 } = require('electron');
 const { SettingsStore } = require('./settings-store');
 const { VaultBridge } = require('./vault-bridge');
@@ -72,10 +71,16 @@ function createMainWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
-  // Show only once the page is painted (no empty flash); the setup panel always shows
-  mainWindow.once('ready-to-show', () => {
+  // Show once the page has applied its theme (no empty or wrong-color flash); the setup panel always shows.
+  // ready-to-show is a fallback in case the page never reports in.
+  let shownOnce = false;
+  const showWhenReady = () => {
+    if (shownOnce || !mainWindow) return;
+    shownOnce = true;
     if (!startHidden || !settings.isConfigured) mainWindow.show();
-  });
+  };
+  ipcMain.once('app:renderer-ready', showWhenReady);
+  mainWindow.once('ready-to-show', () => setTimeout(showWhenReady, 1500));
 
   // Closing (Alt+F4) hides to the tray, so the app stays resident and the hotkey is instant
   mainWindow.on('close', (e) => {
@@ -180,11 +185,6 @@ function applyWindowsAutoStart(enable) {
       console.warn('[AutoStart] Startup folder script warning:', err.message);
     }
   }
-}
-
-// Drives prefers-color-scheme in the page, so the CSS picks the Dark or Light tokens
-function applyTheme(theme) {
-  nativeTheme.themeSource = ['dark', 'light', 'system'].includes(theme) ? theme : 'system';
 }
 
 function togglePinState() {
@@ -372,7 +372,6 @@ function setupIpcHandlers() {
     const updated = settingsStore.update(partial);
     if ('isPinned' in partial) applyPinState(Boolean(updated.isPinned));
     if ('openAtLogin' in partial) applyWindowsAutoStart(Boolean(updated.openAtLogin));
-    if ('theme' in partial) applyTheme(updated.theme);
     if ('universalHotkey' in partial || 'hotkeyTogglePin' in partial) {
       registerGlobalHotkeys();
     }
@@ -465,7 +464,6 @@ function onReady() {
     }
   });
 
-  applyTheme(settingsStore.get('theme'));
   applyWindowsAutoStart(Boolean(settingsStore.get('openAtLogin')));
   setupIpcHandlers();
   createMainWindow();

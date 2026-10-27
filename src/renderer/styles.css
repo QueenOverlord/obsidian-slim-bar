@@ -1,8 +1,12 @@
 /* ==================== DESIGN TOKENS ==================== */
-/* Every color in this file comes from here. Dark is the default block; Light overrides it below.
-   The main process picks the theme with nativeTheme.themeSource (dark / light / follow Windows),
-   which drives prefers-color-scheme, so "Auto" switches live with Windows. */
-:root {
+/* Every color in this file comes from here. A theme is one token block, picked by
+   <html data-theme="…"> (set in theme-manager.js; "Auto" resolves to dark or light).
+   The same blocks also color the swatch previews in Setup, which carry their own data-theme.
+   --md-* tokens are the Markdown roles: headings, bold, italic, links, code, bullets, done, quotes. */
+
+/* Dark (default): calm graphite, purple accent, soft pastel Markdown */
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
 
   --bg-primary: #16161e;
@@ -22,14 +26,23 @@
   --accent-soft: rgba(139, 92, 246, 0.14);
   --accent-ring: rgba(139, 92, 246, 0.32);
   --accent-text: #c4b5fd;
-  --accent-text-2: #a78bfa;
   --selection: rgba(139, 92, 246, 0.3);
   --on-accent: #ffffff;
 
   --text-main: #e4e4ef;
   --text-muted: #9496a8;
   --text-dim: #636578;
-  --text-code: #f0abfc;
+
+  --md-h1: #c4b5fd;
+  --md-h2: #a5b4fc;
+  --md-h3: #7dd3c0;
+  --md-bold: #f5cfa8;
+  --md-italic: #e6d9a8;
+  --md-link: #7dd3fc;
+  --md-code: #f0abfc;
+  --md-bullet: #a78bfa;
+  --md-done: #6ee7b7;
+  --md-quote: #9496a8;
 
   --success: #10b981;
   --success-ring: rgba(16, 185, 129, 0.28);
@@ -45,59 +58,202 @@
   --slider-thumb-hover: #ffffff;
   --shadow-thumb: rgba(0, 0, 0, 0.45);
   --shadow-pill: rgba(0, 0, 0, 0.25);
+}
 
+:root {
   --radius-bar: 10px;
   --radius: 6px;
   --font-sans: 'Segoe UI Variable Text', 'Segoe UI', Inter, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Cascadia Code', 'Consolas', 'JetBrains Mono', monospace;
 }
 
-/* Light: warm paper surfaces, graphite text, a deeper purple so it reads on white */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
+/* Shared by the light themes: status colors, scrollbars and shadows that read on paper */
+[data-theme="light"],
+[data-theme="solarized-light"],
+[data-theme="custom"][data-scheme="light"] {
+  color-scheme: light;
 
-    --bg-primary: #fbfaf7;
-    --bg-secondary: #f2f1ed;
-    --bg-elevated: #e7e5df;
-    --bg-raised: #ffffff;
-    --bg-input: #f2f1ed;
-    --bg-hover: rgba(24, 24, 40, 0.06);
-    --bg-hover-soft: rgba(24, 24, 40, 0.03);
+  --success: #059669;
+  --success-ring: rgba(5, 150, 105, 0.25);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --danger-text: #b91c1c;
 
-    --border-subtle: rgba(24, 24, 40, 0.09);
-    --border-strong: rgba(24, 24, 40, 0.18);
-    --border-focus: #7c3aed;
+  --scrollbar: rgba(24, 24, 40, 0.16);
+  --scrollbar-hover: rgba(24, 24, 40, 0.3);
+  --slider-thumb: #ffffff;
+  --slider-thumb-hover: #ffffff;
+  --shadow-thumb: rgba(24, 24, 40, 0.25);
+  --shadow-pill: rgba(24, 24, 40, 0.12);
+}
 
-    --accent: #7c3aed;
-    --accent-hover: #6d28d9;
-    --accent-soft: rgba(124, 58, 237, 0.1);
-    --accent-ring: rgba(124, 58, 237, 0.32);
-    --accent-text: #6d28d9;
-    --accent-text-2: #7c3aed;
-    --selection: rgba(124, 58, 237, 0.18);
-    --on-accent: #ffffff;
+/* Light: warm paper, graphite text, deeper jewel tones */
+[data-theme="light"] {
+  --bg-primary: #fbfaf7;
+  --bg-secondary: #f2f1ed;
+  --bg-elevated: #e7e5df;
+  --bg-raised: #ffffff;
+  --bg-input: #f2f1ed;
+  --bg-hover: rgba(24, 24, 40, 0.06);
+  --bg-hover-soft: rgba(24, 24, 40, 0.03);
 
-    --text-main: #1f1f29;
-    --text-muted: #5c5d6c;
-    --text-dim: #8b8c99;
-    --text-code: #a21caf;
+  --border-subtle: rgba(24, 24, 40, 0.09);
+  --border-strong: rgba(24, 24, 40, 0.18);
+  --border-focus: #7c3aed;
 
-    --success: #059669;
-    --success-ring: rgba(5, 150, 105, 0.25);
-    --warning: #d97706;
-    --warning-soft: rgba(217, 119, 6, 0.12);
-    --danger: #dc2626;
-    --danger-soft: rgba(220, 38, 38, 0.1);
-    --danger-text: #b91c1c;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: rgba(124, 58, 237, 0.1);
+  --accent-ring: rgba(124, 58, 237, 0.32);
+  --accent-text: #6d28d9;
+  --selection: rgba(124, 58, 237, 0.18);
+  --on-accent: #ffffff;
 
-    --scrollbar: rgba(24, 24, 40, 0.16);
-    --scrollbar-hover: rgba(24, 24, 40, 0.3);
-    --slider-thumb: #ffffff;
-    --slider-thumb-hover: #ffffff;
-    --shadow-thumb: rgba(24, 24, 40, 0.25);
-    --shadow-pill: rgba(24, 24, 40, 0.12);
-  }
+  --text-main: #1f1f29;
+  --text-muted: #5c5d6c;
+  --text-dim: #8b8c99;
+
+  --md-h1: #6d28d9;
+  --md-h2: #4338ca;
+  --md-h3: #0f766e;
+  --md-bold: #9a3412;
+  --md-italic: #8a6a12;
+  --md-link: #0369a1;
+  --md-code: #a21caf;
+  --md-bullet: #7c3aed;
+  --md-done: #047857;
+  --md-quote: #6b6c7a;
+}
+
+/* Dracula (draculatheme.com/spec) */
+[data-theme="dracula"] {
+  color-scheme: dark;
+
+  --bg-primary: #282a36;
+  --bg-secondary: #21222c;
+  --bg-elevated: #44475a;
+  --bg-raised: #44475a;
+  --bg-input: #21222c;
+  --bg-hover: rgba(248, 248, 242, 0.07);
+  --bg-hover-soft: rgba(248, 248, 242, 0.03);
+
+  --border-subtle: rgba(248, 248, 242, 0.08);
+  --border-strong: rgba(248, 248, 242, 0.16);
+  --border-focus: #bd93f9;
+
+  --accent: #bd93f9;
+  --accent-hover: #caa9fa;
+  --accent-soft: rgba(189, 147, 249, 0.16);
+  --accent-ring: rgba(189, 147, 249, 0.36);
+  --accent-text: #bd93f9;
+  --selection: rgba(68, 71, 90, 0.9);
+  --on-accent: #282a36;
+
+  --text-main: #f8f8f2;
+  --text-muted: #a9abc0;
+  --text-dim: #6272a4;
+
+  --md-h1: #bd93f9;
+  --md-h2: #ff79c6;
+  --md-h3: #8be9fd;
+  --md-bold: #ffb86c;
+  --md-italic: #f1fa8c;
+  --md-link: #8be9fd;
+  --md-code: #50fa7b;
+  --md-bullet: #ff79c6;
+  --md-done: #50fa7b;
+  --md-quote: #6272a4;
+
+  --success: #50fa7b;
+  --success-ring: rgba(80, 250, 123, 0.28);
+  --warning: #ffb86c;
+  --warning-soft: rgba(255, 184, 108, 0.12);
+  --danger: #ff5555;
+  --danger-soft: rgba(255, 85, 85, 0.16);
+  --danger-text: #ff6e6e;
+}
+
+/* Solarized Light (ethanschoonover.com/solarized) */
+[data-theme="solarized-light"] {
+  --bg-primary: #fdf6e3;
+  --bg-secondary: #eee8d5;
+  --bg-elevated: #e4ddc8;
+  --bg-raised: #fdf6e3;
+  --bg-input: #eee8d5;
+  --bg-hover: rgba(88, 110, 117, 0.08);
+  --bg-hover-soft: rgba(88, 110, 117, 0.04);
+
+  --border-subtle: rgba(88, 110, 117, 0.14);
+  --border-strong: rgba(88, 110, 117, 0.26);
+  --border-focus: #268bd2;
+
+  --accent: #268bd2;
+  --accent-hover: #1f78b8;
+  --accent-soft: rgba(38, 139, 210, 0.12);
+  --accent-ring: rgba(38, 139, 210, 0.34);
+  --accent-text: #268bd2;
+  --selection: rgba(38, 139, 210, 0.18);
+  --on-accent: #fdf6e3;
+
+  --text-main: #586e75;
+  --text-muted: #657b83;
+  --text-dim: #93a1a1;
+
+  --md-h1: #cb4b16;
+  --md-h2: #268bd2;
+  --md-h3: #2aa198;
+  --md-bold: #073642;
+  --md-italic: #6c71c4;
+  --md-link: #268bd2;
+  --md-code: #d33682;
+  --md-bullet: #b58900;
+  --md-done: #859900;
+  --md-quote: #93a1a1;
+
+  --success: #859900;
+  --warning: #b58900;
+  --danger: #dc322f;
+  --danger-text: #dc322f;
+}
+
+/* Custom: theme-manager.js sets the --c-* colors the user pasted; the surfaces are mixed from them */
+[data-theme="custom"] {
+  --bg-primary: var(--c-bg);
+  --bg-secondary: color-mix(in srgb, var(--c-bg) 94%, var(--c-text));
+  --bg-elevated: color-mix(in srgb, var(--c-bg) 84%, var(--c-text));
+  --bg-raised: color-mix(in srgb, var(--c-bg) 88%, var(--c-text));
+  --bg-input: color-mix(in srgb, var(--c-bg) 94%, var(--c-text));
+  --bg-hover: color-mix(in srgb, var(--c-text) 7%, transparent);
+  --bg-hover-soft: color-mix(in srgb, var(--c-text) 3%, transparent);
+
+  --border-subtle: color-mix(in srgb, var(--c-text) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--c-text) 20%, transparent);
+  --border-focus: var(--c-accent);
+
+  --accent: var(--c-accent);
+  --accent-hover: color-mix(in srgb, var(--c-accent) 85%, var(--c-text));
+  --accent-soft: color-mix(in srgb, var(--c-accent) 14%, transparent);
+  --accent-ring: color-mix(in srgb, var(--c-accent) 34%, transparent);
+  --accent-text: var(--c-accent);
+  --selection: color-mix(in srgb, var(--c-accent) 26%, transparent);
+  --on-accent: var(--c-on-accent);
+
+  --text-main: var(--c-text);
+  --text-muted: color-mix(in srgb, var(--c-text) 68%, var(--c-bg));
+  --text-dim: color-mix(in srgb, var(--c-text) 45%, var(--c-bg));
+
+  --md-h1: var(--c-h1);
+  --md-h2: var(--c-h2);
+  --md-h3: var(--c-h3);
+  --md-bold: var(--c-bold);
+  --md-italic: var(--c-italic);
+  --md-link: var(--c-link);
+  --md-code: var(--c-code);
+  --md-bullet: var(--c-bullet);
+  --md-done: var(--c-done);
+  --md-quote: color-mix(in srgb, var(--c-text) 60%, var(--c-bg));
 }
 
 * {
@@ -128,6 +284,13 @@ input:focus-visible {
 
 .hidden {
   display: none !important;
+}
+
+/* No color fades until the first theme is applied, so nothing animates in from the default Dark */
+.theme-loading *,
+.theme-loading *::before,
+.theme-loading *::after {
+  transition: none !important;
 }
 
 /* ==================== MINIMALIST OBSIDIAN SCROLLBAR ==================== */
@@ -600,18 +763,20 @@ body.mode-slim .expanded-workspace {
 .editor-host .cm-line.cm-lp-h2,
 .editor-host .cm-line.cm-lp-h3,
 .editor-host .cm-line.cm-lp-h4 {
-  color: var(--accent-text);
+  color: var(--md-h3);
   font-weight: 600;
   line-height: 1.45;
 }
 
-.editor-host .cm-line.cm-lp-h1 { font-size: 1.35em; padding-top: 4px; padding-bottom: 2px; }
-.editor-host .cm-line.cm-lp-h2 { font-size: 1.15em; padding-top: 3px; }
+.editor-host .cm-line.cm-lp-h1 { font-size: 1.35em; padding-top: 4px; padding-bottom: 2px; color: var(--md-h1); }
+.editor-host .cm-line.cm-lp-h2 { font-size: 1.15em; padding-top: 3px; color: var(--md-h2); }
 .editor-host .cm-line.cm-lp-h3 { font-size: 1.04em; }
 
-/* Live preview: inline formatting */
-.cm-lp-strong { font-weight: 700; }
-.cm-lp-em { font-style: italic; }
+/* Live preview: inline formatting (inside a heading they keep the heading color) */
+.cm-lp-strong { font-weight: 700; color: var(--md-bold); }
+.cm-lp-em { font-style: italic; color: var(--md-italic); }
+.cm-line[class*="cm-lp-h"] .cm-lp-strong,
+.cm-line[class*="cm-lp-h"] .cm-lp-em { color: inherit; }
 
 .cm-lp-strike {
   text-decoration: line-through;
@@ -624,11 +789,11 @@ body.mode-slim .expanded-workspace {
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 0.9em;
-  color: var(--text-code);
+  color: var(--md-code);
 }
 
 .cm-lp-wikilink {
-  color: var(--accent-text-2);
+  color: var(--md-link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -637,12 +802,12 @@ body.mode-slim .expanded-workspace {
 .cm-lp-bullet {
   display: inline-block;
   width: 0.9em;
-  color: var(--accent-text-2);
+  color: var(--md-bullet);
   font-weight: 700;
 }
 
 .cm-lp-num {
-  color: var(--accent-text-2);
+  color: var(--md-bullet);
 }
 
 .cm-lp-checkbox {
@@ -650,7 +815,7 @@ body.mode-slim .expanded-workspace {
   height: 14px;
   margin: 0 6px 0 0;
   vertical-align: -2px;
-  accent-color: var(--accent);
+  accent-color: var(--md-done);
   cursor: pointer;
   user-select: none;
 }
@@ -664,8 +829,8 @@ body.mode-slim .expanded-workspace {
 .editor-host .cm-line.cm-lp-quote {
   margin-left: 14px;
   padding-left: 10px;
-  border-left: 2px solid var(--accent-hover);
-  color: var(--text-muted);
+  border-left: 2px solid var(--md-bullet);
+  color: var(--md-quote);
   font-style: italic;
 }
 
@@ -939,15 +1104,160 @@ kbd {
   color: var(--text-muted);
 }
 
-/* Theme picker: title on the left, Dark / Light / Auto switch on the right */
-.theme-row {
-  justify-content: space-between;
-  flex-wrap: wrap;
-  row-gap: 6px;
+/* Theme picker: each swatch preview carries its own data-theme, so it shows that theme's real colors */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+  margin-top: 2px;
 }
 
-.theme-switch {
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.theme-swatch:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.theme-swatch.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-main);
+}
+
+.swatch-preview {
+  height: 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 5px 6px;
   background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.swatch-split {
+  flex-direction: row;
+  padding: 0;
+}
+
+.swatch-half {
+  flex: 1;
+  padding: 5px 6px;
+  background: var(--bg-primary);
+}
+
+.swatch-aa {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.swatch-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.swatch-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.swatch-dots i:nth-child(1) { background: var(--md-h1); }
+.swatch-dots i:nth-child(2) { background: var(--md-h2); }
+.swatch-dots i:nth-child(3) { background: var(--md-link); }
+.swatch-dots i:nth-child(4) { background: var(--md-code); }
+
+.swatch-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Custom theme editor */
+.custom-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.custom-theme-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.custom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 6px 12px;
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-field label {
+  flex: 1;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.color-field input[type="color"] {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.color-field input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-field input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+.color-field .hex-input {
+  width: 78px;
+  height: 24px;
+  padding: 0 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  user-select: text;
+}
+
+.color-field .hex-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.color-field .hex-input.invalid {
+  border-color: var(--danger);
 }
 
 .setup-footer {

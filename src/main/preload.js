@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   getState: () => ipcRenderer.invoke('app:get-state'),
   updateSettings: (partial) => ipcRenderer.invoke('settings:update', partial),
   completeOnboarding: (payload) => ipcRenderer.invoke('settings:complete-onboarding', payload),
+  rendererReady: () => ipcRenderer.send('app:renderer-ready'),
 
   // Window Controls (Stick/Unstick, Collapse/Expand, Opacity, Hide/Quit)
   togglePin: () => ipcRenderer.invoke('window:toggle-pin'),

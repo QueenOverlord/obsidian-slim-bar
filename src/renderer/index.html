@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,9 +29,6 @@
       <symbol id="i-divider" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="m8 8 4-4 4 4"/><path d="m16 16-4 4-4-4"/></symbol>
       <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol>
       <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></symbol>
-      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
-      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
-      <symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></symbol>
     </defs>
   </svg>
 
@@ -153,22 +150,64 @@
 
         <!-- CARD 3: THEME (applies instantly; Auto follows Windows light/dark mode) -->
         <div class="setup-card">
-          <div class="card-title-row theme-row">
+          <div class="card-title-row">
             <span class="card-title">Theme</span>
-            <div id="theme-switch" class="md-mode-switch theme-switch" role="radiogroup" aria-label="Theme">
-              <button class="mode-switch-btn" data-theme="dark" type="button" role="radio" title="Dark">
-                <svg class="icon icon-sm"><use href="#i-moon"/></svg>
-                <span>Dark</span>
-              </button>
-              <button class="mode-switch-btn" data-theme="light" type="button" role="radio" title="Light">
-                <svg class="icon icon-sm"><use href="#i-sun"/></svg>
-                <span>Light</span>
-              </button>
-              <button class="mode-switch-btn" data-theme="system" type="button" role="radio" title="Follow Windows light/dark mode">
-                <svg class="icon icon-sm"><use href="#i-monitor"/></svg>
-                <span>Auto</span>
+          </div>
+          <div id="theme-grid" class="theme-grid" role="radiogroup" aria-label="Theme">
+            <button class="theme-swatch" data-theme-pick="system" type="button" role="radio" title="Follow Windows light/dark mode">
+              <span class="swatch-preview swatch-split">
+                <span class="swatch-half" data-theme="light"><span class="swatch-aa">Aa</span></span>
+                <span class="swatch-half" data-theme="dark"><span class="swatch-aa">Aa</span></span>
+              </span>
+              <span class="swatch-label">Auto</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="dark" type="button" role="radio" title="Dark">
+              <span class="swatch-preview" data-theme="dark">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Dark</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="light" type="button" role="radio" title="Light">
+              <span class="swatch-preview" data-theme="light">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Light</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="dracula" type="button" role="radio" title="Dracula">
+              <span class="swatch-preview" data-theme="dracula">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Dracula</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="solarized-light" type="button" role="radio" title="Solarized Light">
+              <span class="swatch-preview" data-theme="solarized-light">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Solarized</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="custom" type="button" role="radio" title="Your own colors">
+              <span class="swatch-preview" data-theme="custom">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Custom</span>
+            </button>
+          </div>
+
+          <!-- Custom theme: paste a hex code or pick a color (rows built in theme-manager.js) -->
+          <div id="custom-theme-editor" class="custom-theme hidden">
+            <div class="custom-theme-head">
+              <span class="card-help">Paste a hex code (like #ff79c6) or click a color.</span>
+              <button id="btn-custom-from-theme" class="secondary-btn" type="button" title="Start over from the Dark or Light theme">
+                <svg class="icon"><use href="#i-reset"/></svg>
+                <span>Reset</span>
               </button>
             </div>
+            <div id="custom-theme-fields" class="custom-grid"></div>
           </div>
         </div>
 
@@ -275,6 +314,7 @@
 
   <script src="./vendor/codemirror.js"></script>
   <script src="./markdown-helper.js"></script>
+  <script src="./theme-manager.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

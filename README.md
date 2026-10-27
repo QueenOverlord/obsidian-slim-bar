@@ -9,7 +9,8 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.
 - **Opacity slider:** fade the bar so it doesn't cover what you're working on.
-- **Light and dark themes:** pick Dark, Light, or Auto to follow Windows.
+- **Themes:** Dark, Light, Dracula, Solarized Light, or Auto to follow Windows. Headings, links, code and tasks each get their own color.
+- **Your own theme:** paste hex codes (or pick colors) for 12 parts of the app and the editor.
 - **Starts with Windows** (optional), so the hotkey is always ready.
 
 > [!NOTE]
@@ -44,7 +45,7 @@ You'll find it in the Start Menu as **Obsidian Slim Bar**.
 | Collapse back to the slim bar | `Esc` in the editor |
 | Pin / unpin on top | Pin button, or `Alt+Shift+P` |
 | Open the note in Obsidian | Arrow button in the bar |
-| Change note or hotkey | Click the note name, or the settings button |
+| Change note, hotkey or theme | Click the note name, or the settings button |
 | Hide to the tray | Minus button (the tray icon brings it back) |
 | Quit completely | Tray icon → **Quit Completely**, or **Quit** in Setup |
 
@@ -103,7 +104,8 @@ obsidian-slim-bar/
     │   └── preload.js         # Safe bridge between the window and the main process
     └── renderer/
         ├── index.html         # Slim bar, setup panel, editor
-        ├── styles.css         # All colors live in tokens at the top (Dark + Light)
+        ├── styles.css         # All colors live in theme token blocks at the top
+        ├── theme-manager.js   # Active theme, Auto (follows Windows), Custom theme editor
         ├── markdown-helper.js # CodeMirror editor, live preview, toolbar actions
         ├── app.js             # UI state, hotkey recorder, events
         └── vendor/

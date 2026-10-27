@@ -1,6 +1,7 @@
 (() => {
   const api = window.slimBarAPI;
   const mdHelper = window.MarkdownHelper;
+  const themes = window.ThemeManager;
 
   // DOM Elements — Slim Bar Header
   const body = document.body;
@@ -32,7 +33,10 @@
   const recorderHint = document.getElementById('recorder-hint');
   const btnResetHotkey = document.getElementById('btn-reset-hotkey');
 
-  const themeButtons = document.querySelectorAll('#theme-switch [data-theme]');
+  const themeSwatches = document.querySelectorAll('#theme-grid [data-theme-pick]');
+  const customThemeEditor = document.getElementById('custom-theme-editor');
+  const customThemeFields = document.getElementById('custom-theme-fields');
+  const btnCustomFromTheme = document.getElementById('btn-custom-from-theme');
   const checkboxOpenAtLogin = document.getElementById('checkbox-open-at-login');
   const btnSaveSetup = document.getElementById('btn-save-setup');
   const btnQuitApp = document.getElementById('btn-quit-app');
@@ -57,6 +61,19 @@
   let isRecordingHotkey = false;
   let recordedHotkey = 'Alt+Space';
   let saveTimeout = null;
+  let customSaveTimeout = null;
+  let customTheme = null;
+
+  // Custom theme rows: every valid color applies live and saves shortly after you stop typing
+  const customEditor = themes.buildCustomEditor(customThemeFields, (key, hex) => {
+    customTheme = { ...customTheme, [key]: hex };
+    themes.apply('custom', customTheme);
+    if (customSaveTimeout) clearTimeout(customSaveTimeout);
+    customSaveTimeout = setTimeout(() => {
+      customSaveTimeout = null;
+      api.updateSettings({ customTheme });
+    }, 300);
+  });
 
   async function init() {
     const state = await api.getState();
@@ -67,6 +84,9 @@
     }
 
     bindEvents();
+
+    // Theme is painted now, so the window can appear without a flash of the wrong colors
+    api.rendererReady();
   }
 
   function setDocumentContent(rawContent) {
@@ -138,13 +158,18 @@
     quickCaptureInput.title = `Type + Enter to add a line (${recordedHotkey} to expand)`;
     btnExpand.title = `Expand / collapse (${recordedHotkey})`;
 
-    // 5. Theme picker (the colors themselves switch in CSS via prefers-color-scheme)
+    // 5. Theme picker + Custom theme editor
     const theme = settings.theme || 'system';
-    themeButtons.forEach((btn) => {
-      const isActive = btn.dataset.theme === theme;
+    // While a color edit is waiting to save, the local colors are newer than the saved ones
+    if (!customSaveTimeout) customTheme = settings.customTheme || customTheme;
+    themes.apply(theme, customTheme);
+    themeSwatches.forEach((btn) => {
+      const isActive = btn.dataset.themePick === theme;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-checked', String(isActive));
     });
+    customThemeEditor.classList.toggle('hidden', theme !== 'custom');
+    if (customTheme) customEditor.setValues(customTheme);
 
     checkboxOpenAtLogin.checked = Boolean(settings.openAtLogin);
     const savedOpacity =
@@ -308,11 +333,25 @@
     });
 
     // 7b. Theme: applies and saves instantly, no need to press Save
-    themeButtons.forEach((btn) => {
+    themeSwatches.forEach((btn) => {
       btn.addEventListener('click', async () => {
-        const updated = await api.updateSettings({ theme: btn.dataset.theme });
+        const theme = btn.dataset.themePick;
+        const partial = { theme };
+        // First time on Custom: start from the colors of the theme you were on
+        if (theme === 'custom' && !customTheme) {
+          partial.customTheme = themes.readTheme(currentState.settings.theme || 'system');
+        }
+        const updated = await api.updateSettings(partial);
         applyState(updated, false);
       });
+    });
+
+    // 7c. Custom theme Reset: back to the Dark or Light colors, whichever is closer
+    btnCustomFromTheme.addEventListener('click', async () => {
+      const base = themes.isLightCustom() ? 'light' : 'dark';
+      const updated = await api.updateSettings({ customTheme: themes.readTheme(base) });
+      customTheme = updated.settings.customTheme;
+      applyState(updated, false);
     });
 
     // 8. Save Visual Setup Panel
