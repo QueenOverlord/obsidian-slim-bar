@@ -6,6 +6,7 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 
 - **Slim bar (44px):** sits at the top of your screen. Type one line and press `Enter` to add it to your note.
 - **Expanded pad:** a full Markdown editor with live preview, like Obsidian's. Switch to **Origin** to see the raw Markdown.
+- **Tables, math, tags, comments and clickable links**, shown like in Obsidian: tables drawn as real tables, `$math$` and `$$math$$` typeset (KaTeX, works offline), `#tags` as pills, `%% comments %%` dimmed. A click opens web links in your browser, and `[[wikilinks]]` and `#tags` in Obsidian. Click a table or a formula to edit its Markdown.
 - **Code blocks with a Copy button:** wrap a message or email in ```` ``` ```` fences and it shows as a panel, like in Obsidian. One click on **Copy** puts the text on your clipboard (no fences, no `> ` quote marks).
 - **Favorite notes:** keep up to 10 notes (one per project, say) and switch between them from the note name in the bar.
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
@@ -138,10 +139,11 @@ obsidian-slim-bar/
         ├── index.html         # Slim bar, setup panel, editor
         ├── styles.css         # All colors live in theme token blocks at the top
         ├── theme-manager.js   # Active theme, Auto (follows Windows), painting your own themes
-        ├── markdown-helper.js # CodeMirror editor, live preview, toolbar actions
+        ├── markdown-helper.js # CodeMirror editor, live preview (tables, math, links…), toolbar actions
         ├── app.js             # UI state, hotkey recorder, events
         └── vendor/
-            └── codemirror.js  # Pre-built CodeMirror 6 bundle
+            ├── codemirror.js  # Pre-built CodeMirror 6 bundle
+            └── katex/         # KaTeX, for math
 ```
 
 ---

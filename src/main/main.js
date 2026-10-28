@@ -568,6 +568,9 @@ function setupIpcHandlers() {
   });
   ipcMain.handle('themes:open-folder', () => themeStore.openFolder());
 
+  // Clicks on links, [[wikilinks]] and #tags in the editor
+  ipcMain.handle('link:open', (_e, kind, value) => vaultBridge.openLink(kind, value));
+
   // Copy button on code blocks
   ipcMain.handle('clipboard:write', (_e, text) => clipboard.writeText(String(text ?? '')));
 

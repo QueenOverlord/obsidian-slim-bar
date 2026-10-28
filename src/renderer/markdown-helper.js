@@ -6,7 +6,7 @@
  */
 (() => {
   const {
-    EditorState, EditorSelection, Compartment, Annotation, Transaction,
+    EditorState, EditorSelection, Compartment, Annotation, Transaction, StateField,
     EditorView, keymap, Decoration, ViewPlugin, WidgetType, drawSelection, placeholder,
     history, defaultKeymap, historyKeymap, indentWithTab,
     markdown, markdownLanguage,
@@ -15,6 +15,8 @@
 
   // Marks edits that came from the .md file (not typed), so they don't trigger a save
   const External = Annotation.define();
+  // Tells the table / math blocks that the editor gained or lost focus
+  const FocusChange = Annotation.define();
 
   // ==================== WIDGETS ====================
   class BulletWidget extends WidgetType {
@@ -108,6 +110,73 @@
     ignoreEvent() { return true; }
   }
 
+  // Math typeset by KaTeX (bundled in vendor/katex); bad LaTeX shows in red instead of breaking
+  class MathWidget extends WidgetType {
+    constructor(tex, display) {
+      super();
+      this.tex = tex;
+      this.display = display;
+    }
+    eq(other) { return other.tex === this.tex && other.display === this.display; }
+    toDOM() {
+      const el = document.createElement(this.display ? 'div' : 'span');
+      el.className = this.display ? 'cm-lp-math cm-lp-math-block' : 'cm-lp-math';
+      try {
+        window.katex.render(this.tex, el, { displayMode: this.display, throwOnError: false, output: 'html' });
+      } catch {
+        el.textContent = this.tex;
+      }
+      return el;
+    }
+    ignoreEvent() { return false; }
+  }
+
+  const escapeHtml = (text) =>
+    text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  // Bold, italic, strike, code and links inside a table cell
+  function renderInline(text) {
+    return escapeHtml(text)
+      .replace(/`([^`]+)`/g, '<code class="cm-lp-code">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong class="cm-lp-strong">$1</strong>')
+      .replace(/(^|[^*])\*([^*]+)\*/g, '$1<em class="cm-lp-em">$2</em>')
+      .replace(/~~([^~]+)~~/g, '<s>$1</s>')
+      .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '<span class="cm-lp-wikilink" data-wikilink="$1">$2</span>')
+      .replace(/\[\[([^\]]+)\]\]/g, '<span class="cm-lp-wikilink" data-wikilink="$1">$1</span>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<span class="cm-lp-link" data-href="$2">$1</span>');
+  }
+
+  // "| a | b |" -> ["a", "b"] (a "\|" stays inside its cell)
+  function splitRow(line) {
+    return line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|'));
+  }
+
+  // A Markdown table drawn as a real table; clicking it puts the cursor inside to edit the Markdown
+  class TableWidget extends WidgetType {
+    constructor(source) {
+      super();
+      this.source = source;
+    }
+    eq(other) { return other.source === this.source; }
+    toDOM() {
+      const [head, delimiter, ...rows] = this.source.split('\n');
+      const aligns = splitRow(delimiter || '').map((d) =>
+        /^:-+:$/.test(d) ? 'center' : /^-+:$/.test(d) ? 'right' : /^:-+$/.test(d) ? 'left' : ''
+      );
+      const cells = (line, tag) =>
+        splitRow(line)
+          .map((cell, i) => `<${tag}${aligns[i] ? ` style="text-align:${aligns[i]}"` : ''}>${renderInline(cell)}</${tag}>`)
+          .join('');
+      const wrap = document.createElement('div');
+      wrap.className = 'cm-lp-table-wrap';
+      wrap.innerHTML =
+        `<table class="cm-lp-table"><thead><tr>${cells(head, 'th')}</tr></thead>` +
+        `<tbody>${rows.map((row) => `<tr>${cells(row, 'td')}</tr>`).join('')}</tbody></table>`;
+      return wrap;
+    }
+    ignoreEvent() { return false; } // clicks reach the editor: links open, the table opens for editing
+  }
+
   // ==================== LIVE PREVIEW ====================
   const hide = Decoration.replace({});
   const bullet = Decoration.replace({ widget: new BulletWidget() });
@@ -180,6 +249,132 @@
     decos.push(Decoration.widget({ widget: new CopyCodeWidget(body.join('\n')), side: 1 }).range(openLine.to));
   }
 
+  // Math, tags and comments are not part of Markdown's syntax tree: they are found by pattern,
+  // skipping anything inside code or a URL
+  const CODE_NODES = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'URL', 'Autolink', 'HTMLBlock', 'CommentBlock']);
+  function inCode(state, pos) {
+    for (let n = syntaxTree(state).resolveInner(pos, 1); n; n = n.parent) {
+      if (CODE_NODES.has(n.name)) return true;
+    }
+    return false;
+  }
+
+  const DISPLAY_MATH_RE = /^[ \t]*\$\$([\s\S]+?)\$\$[ \t]*$/gm;
+  const INLINE_MATH_RE = /(?<![\\$])\$(?=[^\s$])([^$\n]+?)(?<=[^\s$])\$(?![\d$])/g;
+  const COMMENT_RE = /%%[\s\S]*?%%/g;
+  const TAG_RE = /(^|[\s(])#([\p{L}\p{N}_/-]*[\p{L}_/-][\p{L}\p{N}_/-]*)/gu;
+  const WIKI_RE = /\[\[([^\]\n|#]*)(#[^\]\n|]*)?(?:\|([^\]\n]+))?\]\]/g;
+
+  // Lines the cursor is on, for blocks (state only: no view here)
+  function blockRevealed(state, focused, from, to) {
+    if (!focused) return false;
+    return state.selection.ranges.some((r) => r.from <= to && r.to >= from);
+  }
+
+  // Tables and $$display math$$ replace whole lines, which only a state field may do
+  function buildBlocks(state, focused) {
+    const decos = [];
+    const doc = state.doc;
+    syntaxTree(state).iterate({
+      enter: (node) => {
+        if (node.name === 'Table') {
+          const from = doc.lineAt(node.from).from;
+          const to = doc.lineAt(node.to).to;
+          if (!blockRevealed(state, focused, from, to)) {
+            decos.push(Decoration.replace({ widget: new TableWidget(state.sliceDoc(from, to)), block: true }).range(from, to));
+          }
+          return false;
+        }
+        if (node.name === 'FencedCode' || node.name === 'CodeBlock') return false;
+        return undefined;
+      },
+    });
+    const text = doc.toString();
+    for (const m of text.matchAll(DISPLAY_MATH_RE)) {
+      const from = m.index;
+      const to = m.index + m[0].length;
+      if (inCode(state, from) || blockRevealed(state, focused, from, to)) continue;
+      decos.push(Decoration.replace({ widget: new MathWidget(m[1].trim(), true), block: true }).range(from, to));
+    }
+    return Decoration.set(decos, true);
+  }
+
+  const blockPreview = StateField.define({
+    create: (state) => ({ focused: false, decos: buildBlocks(state, false) }),
+    update(value, tr) {
+      const focus = tr.annotation(FocusChange);
+      const focused = focus === undefined ? value.focused : focus;
+      if (
+        focus === undefined &&
+        !tr.docChanged &&
+        !tr.selection &&
+        syntaxTree(tr.startState) === syntaxTree(tr.state)
+      ) {
+        return value;
+      }
+      return { focused, decos: buildBlocks(tr.state, focused) };
+    },
+    provide: (field) => EditorView.decorations.from(field, (value) => value.decos),
+  });
+
+  // Display math ranges, so inline math, tags and comments inside them are left alone
+  function displayMathRanges(text) {
+    return [...text.matchAll(DISPLAY_MATH_RE)].map((m) => [m.index, m.index + m[0].length]);
+  }
+
+  // Links, tags, comments, inline math and wikilinks in the visible part of the note
+  function decoratePatterns(view, revealed, decos) {
+    const { state } = view;
+    const isHidden = (pos) => !revealed.has(state.doc.lineAt(pos).number);
+    const text = state.doc.toString();
+    const display = displayMathRanges(text);
+    const inDisplay = (pos) => display.some(([a, b]) => pos >= a && pos < b);
+    const skip = (pos) => inDisplay(pos) || inCode(state, pos);
+
+    // %% comments %% can span lines, so they are searched in the whole note
+    for (const m of text.matchAll(COMMENT_RE)) {
+      const from = m.index;
+      const to = from + m[0].length;
+      if (skip(from)) continue;
+      decos.push(markClass('cm-lp-comment').range(from, to));
+      if (isHidden(from)) decos.push(hide.range(from, from + 2));
+      if (isHidden(to - 2)) decos.push(hide.range(to - 2, to));
+    }
+
+    for (const { from, to } of view.visibleRanges) {
+      const slice = state.sliceDoc(from, to);
+
+      for (const m of slice.matchAll(INLINE_MATH_RE)) {
+        const start = from + m.index;
+        const end = start + m[0].length;
+        if (skip(start)) continue;
+        if (isHidden(start)) decos.push(Decoration.replace({ widget: new MathWidget(m[1], false) }).range(start, end));
+        else decos.push(markClass('cm-lp-math-src').range(start, end));
+      }
+
+      for (const m of slice.matchAll(TAG_RE)) {
+        const start = from + m.index + m[1].length;
+        const end = start + 1 + m[2].length;
+        if (skip(start)) continue;
+        decos.push(Decoration.mark({ class: 'cm-lp-tag', attributes: { 'data-tag': m[2] } }).range(start, end));
+      }
+
+      // [[Note]], [[Note#Heading]], [[Note|alias]]: brackets (and "Note|") hidden off the cursor line
+      for (const m of slice.matchAll(WIKI_RE)) {
+        const start = from + m.index;
+        const end = start + m[0].length;
+        if (skip(start)) continue;
+        const target = (m[1] + (m[2] || '')).trim();
+        const textFrom = m[3] ? end - 2 - m[3].length : start + 2;
+        decos.push(Decoration.mark({ class: 'cm-lp-wikilink', attributes: { 'data-wikilink': target } }).range(textFrom, end - 2));
+        if (isHidden(start)) {
+          decos.push(hide.range(start, textFrom));
+          decos.push(hide.range(end - 2, end));
+        }
+      }
+    }
+  }
+
   function buildDecorations(view) {
     const { state } = view;
     const decos = [];
@@ -244,19 +439,44 @@
             }
           } else if (name === 'HorizontalRule') {
             if (isHidden(node.from)) decos.push(hr.range(node.from, node.to));
+          } else if (name === 'Link') {
+            // [text](url): only the text shows, in the link color, and a click opens the url
+            const marks = node.node.getChildren('LinkMark');
+            const url = node.node.getChild('URL');
+            if (!url || marks.length < 2) return;
+            const href = state.sliceDoc(url.from, url.to);
+            const textFrom = marks[0].to;
+            const textTo = marks[1].from;
+            if (textTo > textFrom) {
+              decos.push(Decoration.mark({ class: 'cm-lp-link', attributes: { 'data-href': href } }).range(textFrom, textTo));
+            }
+            if (isHidden(node.from)) {
+              hideRange(node.from, textFrom);
+              hideRange(textTo, node.to);
+            }
+            return false;
+          } else if (name === 'Image') {
+            return false; // ![image](…) stays as text
+          } else if (name === 'Autolink') {
+            // <https://…>: hide the angle brackets
+            const url = node.node.getChild('URL');
+            if (!url) return false;
+            decos.push(Decoration.mark({ class: 'cm-lp-link', attributes: { 'data-href': state.sliceDoc(url.from, url.to) } }).range(url.from, url.to));
+            if (isHidden(node.from)) {
+              hideRange(node.from, url.from);
+              hideRange(url.to, node.to);
+            }
+            return false;
+          } else if (name === 'URL') {
+            // A bare https://… link in the text
+            decos.push(Decoration.mark({ class: 'cm-lp-link', attributes: { 'data-href': state.sliceDoc(node.from, node.to) } }).range(node.from, node.to));
           }
         },
       });
 
-      // Obsidian [[WikiLinks]] (not part of standard Markdown)
-      const text = state.sliceDoc(from, to);
-      const wikiRe = /\[\[([^\]\n]+)\]\]/g;
-      let m;
-      while ((m = wikiRe.exec(text))) {
-        decos.push(markClass('cm-lp-wikilink').range(from + m.index, from + m.index + m[0].length));
-      }
     }
 
+    decoratePatterns(view, revealed, decos);
     return Decoration.set(decos, true);
   }
 
@@ -370,8 +590,41 @@
   }
 
   // ==================== PUBLIC API ====================
-  function createEditor(parent, { onChange, onEscape }) {
+  // A click on a link, wikilink or tag opens it (on the cursor line, Ctrl+click: plain clicks edit there).
+  // A click on a table or math block puts the cursor in it.
+  function linkClicks(onOpenLink) {
+    return EditorView.domEventHandlers({
+      mousedown(e, view) {
+        if (e.button !== 0) return false;
+        const el = e.target.closest('[data-href], [data-wikilink], [data-tag]');
+        const block = e.target.closest('.cm-lp-table-wrap, .cm-lp-math-block');
+        // A click on a table or a math block (not on a link in it) opens its Markdown for editing
+        if (block && !el && view.contentDOM.contains(block)) {
+          e.preventDefault();
+          view.focus();
+          view.dispatch({ selection: EditorSelection.cursor(view.posAtDOM(block)), annotations: FocusChange.of(true) });
+          return true;
+        }
+        if (!el || !view.contentDOM.contains(el)) return false;
+        const inTable = el.closest('.cm-lp-table-wrap');
+        if (!inTable) {
+          const line = view.state.doc.lineAt(view.posAtDOM(el)).number;
+          if (!e.ctrlKey && revealedLines(view).has(line)) return false;
+        }
+        e.preventDefault();
+        if (el.dataset.href) onOpenLink('url', el.dataset.href);
+        else if (el.dataset.wikilink) onOpenLink('note', el.dataset.wikilink);
+        else onOpenLink('tag', el.dataset.tag);
+        return true;
+      },
+      focus: (_e, view) => { setTimeout(() => view.dispatch({ annotations: FocusChange.of(true) })); },
+      blur: (_e, view) => { setTimeout(() => view.dispatch({ annotations: FocusChange.of(false) })); },
+    });
+  }
+
+  function createEditor(parent, { onChange, onEscape, onOpenLink = () => {} }) {
     const preview = new Compartment();
+    const previewOn = [livePreview, blockPreview];
     const undoHistory = new Compartment();
     let mode = 'normal';
 
@@ -395,7 +648,8 @@
             ...historyKeymap,
             ...defaultKeymap,
           ]),
-          preview.of(livePreview),
+          preview.of(previewOn),
+          linkClicks(onOpenLink),
           EditorView.updateListener.of((u) => {
             if (u.docChanged && !u.transactions.some((tr) => tr.annotation(External))) onChange();
           }),
@@ -459,7 +713,7 @@
         const offset = before !== null ? -before : scrollTop - pad - anchor.top;
 
         parent.classList.toggle('is-origin', mode === 'origin');
-        view.dispatch({ effects: preview.reconfigure(mode === 'origin' ? [] : livePreview) });
+        view.dispatch({ effects: preview.reconfigure(mode === 'origin' ? [] : previewOn) });
 
         // Line heights change between modes, so once layout settles, measure where the anchor
         // line really is on screen and nudge the scroll until it sits exactly where it was.

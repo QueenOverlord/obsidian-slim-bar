@@ -79,6 +79,7 @@
   const editor = mdHelper.createEditor(editorHost, {
     onChange: () => scheduleSave(),
     onEscape: () => api.toggleExpand(false),
+    onOpenLink: (kind, value) => api.openLink(kind, value),
   });
 
   let recordingBox = null;

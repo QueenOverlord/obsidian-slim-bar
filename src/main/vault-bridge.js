@@ -241,6 +241,38 @@ class VaultBridge {
     return { ok: true, uri };
   }
 
+  // The vault is the nearest folder above the note that holds an .obsidian folder
+  findVaultRoot() {
+    let dir = path.dirname(this.resolveTargetNotePath());
+    for (;;) {
+      if (fs.existsSync(path.join(dir, '.obsidian'))) return dir;
+      const parent = path.dirname(dir);
+      if (parent === dir) return null;
+      dir = parent;
+    }
+  }
+
+  // Clicks in the editor: web and mail links open in the browser / mail app, [[Note]] and #tag in Obsidian
+  async openLink(kind, value) {
+    const text = String(value || '').trim();
+    if (!text) return { ok: false };
+    if (kind === 'url') {
+      const url = /^www\./i.test(text) ? `https://${text}` : text;
+      if (!/^(https?:|mailto:|obsidian:)/i.test(url)) return { ok: false, error: 'Only web, mail and Obsidian links open' };
+      await shell.openExternal(url);
+      return { ok: true };
+    }
+    const vault = this.findVaultRoot();
+    if (!vault) return { ok: false, error: 'This note is not inside an Obsidian vault' };
+    const vaultName = encodeURIComponent(path.basename(vault));
+    const uri =
+      kind === 'tag'
+        ? `obsidian://search?vault=${vaultName}&query=${encodeURIComponent(`tag:#${text}`)}`
+        : `obsidian://open?vault=${vaultName}&file=${encodeURIComponent(text)}`;
+    await shell.openExternal(uri);
+    return { ok: true, uri };
+  }
+
   _watchFile(filePath) {
     if (this.watcher) {
       try {
