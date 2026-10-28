@@ -11,7 +11,7 @@ const {
   nativeImage,
 } = require('electron');
 const { SettingsStore, DEFAULT_SETTINGS } = require('./settings-store');
-const { VaultBridge } = require('./vault-bridge');
+const { VaultBridge, FAVORITES_FULL_ERROR } = require('./vault-bridge');
 
 let mainWindow = null;
 let tray = null;
@@ -239,6 +239,7 @@ function getFullStatePayload() {
   return {
     settings: settingsStore.getAll(),
     note: vaultBridge.readNote(),
+    favorites: vaultBridge.listFavorites(),
     hotkeyErrors,
   };
 }
@@ -543,6 +544,45 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('vault:open-in-obsidian', () => vaultBridge.openInObsidian());
+
+  // Favorite notes (the note pill's dropdown)
+  ipcMain.handle('favorites:add', (_e, rawPath) => {
+    const res = vaultBridge.addFavorite(rawPath);
+    return { ...res, state: getFullStatePayload() };
+  });
+
+  ipcMain.handle('favorites:remove', (_e, filePath) => {
+    vaultBridge.removeFavorite(filePath);
+    return { ok: true, state: getFullStatePayload() };
+  });
+
+  ipcMain.handle('favorites:switch', (_e, filePath) => {
+    const res = vaultBridge.switchToFavorite(filePath);
+    return { ok: res.ok, error: res.error, state: getFullStatePayload() };
+  });
+
+  // Pick any .md file: it becomes the active note and joins the favorites
+  ipcMain.handle('favorites:browse-add', async () => {
+    if (vaultBridge.isFavoritesFull()) {
+      return { ok: false, error: FAVORITES_FULL_ERROR, state: getFullStatePayload() };
+    }
+    const res = await vaultBridge.browseNoteFile(mainWindow);
+    if (!res.canceled && res.ok) vaultBridge.addFavorite(res.path);
+    return { ok: res.canceled || res.ok, error: res.error, state: getFullStatePayload() };
+  });
+
+  // The slim window is only 44px tall: grow it while the note dropdown is open, then shrink back
+  ipcMain.handle('window:menu-space', (_e, totalHeight) => {
+    if (!mainWindow || settingsStore.get('isExpanded')) return;
+    const height = Math.max(settingsStore.get('slimHeight'), Math.round(Number(totalHeight) || 0));
+    const bounds = mainWindow.getBounds();
+    if (bounds.height === height) return;
+    isSavingBounds = true;
+    mainWindow.setBounds({ ...bounds, height });
+    setTimeout(() => {
+      isSavingBounds = false;
+    }, 150);
+  });
 }
 
 // Only one copy may run: opening it again just brings up the existing bar

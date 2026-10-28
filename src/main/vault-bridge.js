@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { dialog, shell } = require('electron');
 
+const MAX_FAVORITES = 10;
+const FAVORITES_FULL_ERROR = `Up to ${MAX_FAVORITES} favorites. Remove one first.`;
+
 class VaultBridge {
   constructor(settingsStore, onExternalFileChange) {
     this.settingsStore = settingsStore;
@@ -166,6 +169,52 @@ class VaultBridge {
   }
 
   /**
+   * Favorite notes for the note pill's dropdown, with a flag for files that were moved or deleted.
+   */
+  listFavorites() {
+    const activeKey = this._pathKey(this.resolveTargetNotePath());
+    return (this.settingsStore.get('favoriteNotes') || []).map((filePath) => ({
+      path: filePath,
+      name: path.basename(filePath, path.extname(filePath)),
+      exists: fs.existsSync(filePath),
+      isActive: this._pathKey(filePath) === activeKey,
+    }));
+  }
+
+  isFavoritesFull() {
+    return (this.settingsStore.get('favoriteNotes') || []).length >= MAX_FAVORITES;
+  }
+
+  addFavorite(rawPath) {
+    const filePath = rawPath || this.resolveTargetNotePath();
+    const favorites = this.settingsStore.get('favoriteNotes') || [];
+    if (favorites.some((p) => this._pathKey(p) === this._pathKey(filePath))) return { ok: true };
+    if (this.isFavoritesFull()) return { ok: false, error: FAVORITES_FULL_ERROR };
+    this.settingsStore.update({ favoriteNotes: [...favorites, filePath] });
+    return { ok: true };
+  }
+
+  // Only takes the note off the list; the file itself is never touched
+  removeFavorite(filePath) {
+    const favorites = this.settingsStore.get('favoriteNotes') || [];
+    const key = this._pathKey(filePath);
+    this.settingsStore.update({ favoriteNotes: favorites.filter((p) => this._pathKey(p) !== key) });
+    return { ok: true };
+  }
+
+  switchToFavorite(filePath) {
+    if (!fs.existsSync(filePath)) {
+      return { ok: false, error: 'File not found. It may have been moved or renamed.' };
+    }
+    return this.setNotePath(filePath);
+  }
+
+  // Windows paths are case-insensitive, so C:\Vault\a.md and c:\vault\A.md are the same note
+  _pathKey(filePath) {
+    return path.resolve(filePath).toLowerCase();
+  }
+
+  /**
    * Opens the currently active .md note directly inside the Obsidian Desktop app via obsidian:// URI.
    */
   async openInObsidian() {
@@ -222,4 +271,4 @@ class VaultBridge {
   }
 }
 
-module.exports = { VaultBridge };
+module.exports = { VaultBridge, FAVORITES_FULL_ERROR };

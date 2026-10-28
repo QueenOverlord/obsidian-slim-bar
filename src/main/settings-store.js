@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
 
   // Single .md Note Connection (inside Obsidian Vault or anywhere on disk)
   activeNotePath: '',
+  favoriteNotes: [],          // Up to 10 .md paths, shown in the note pill's dropdown
 
   // System & Startup Behavior (LanguageTool style)
   openAtLogin: true,          // Launch automatically when Windows starts

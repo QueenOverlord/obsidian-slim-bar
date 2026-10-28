@@ -29,6 +29,13 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   setNotePath: (rawPath) => ipcRenderer.invoke('vault:set-note-path', rawPath),
   openInObsidian: () => ipcRenderer.invoke('vault:open-in-obsidian'),
 
+  // Favorite notes (the note pill's dropdown)
+  addFavorite: (rawPath) => ipcRenderer.invoke('favorites:add', rawPath),
+  removeFavorite: (filePath) => ipcRenderer.invoke('favorites:remove', filePath),
+  switchToFavorite: (filePath) => ipcRenderer.invoke('favorites:switch', filePath),
+  browseAddFavorite: () => ipcRenderer.invoke('favorites:browse-add'),
+  setMenuSpace: (totalHeight) => ipcRenderer.invoke('window:menu-space', totalHeight),
+
   // Events pushed from Main Process
   onStateChanged: (callback) => {
     const listener = (_event, state) => callback(state);

@@ -280,6 +280,7 @@
   // ==================== PUBLIC API ====================
   function createEditor(parent, { onChange, onEscape }) {
     const preview = new Compartment();
+    const undoHistory = new Compartment();
     let mode = 'normal';
 
     const view = new EditorView({
@@ -287,7 +288,7 @@
       state: EditorState.create({
         doc: '',
         extensions: [
-          history(),
+          undoHistory.of(history()),
           drawSelection(),
           EditorView.lineWrapping,
           markdown({ base: markdownLanguage }), // includes smart Enter for lists & tasks
@@ -330,6 +331,14 @@
           changes: { from: start, to: endCur, insert: next.slice(start, endNext) },
           annotations: [External.of(true), Transaction.addToHistory.of(false)],
         });
+      },
+
+      // A different note: fresh undo history (Ctrl+Z must not bring back the old note), back to the top
+      loadDocument(text) {
+        this.setContent(text);
+        view.dispatch({ effects: undoHistory.reconfigure([]) });
+        view.dispatch({ effects: undoHistory.reconfigure(history()), selection: EditorSelection.cursor(0) });
+        view.scrollDOM.scrollTop = 0;
       },
 
       hasFocus: () => view.hasFocus,

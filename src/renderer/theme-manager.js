@@ -1,6 +1,6 @@
 /**
  * Theme Manager — picks the active token block in styles.css via <html data-theme="…">.
- * 1. Built-in themes: Dark, Light, Dracula, Solarized Light ("system" = Auto, follows Windows)
+ * 1. Built-in themes: Dark, Light, Dracula, Solarized Light, Akira × DedSec ("system" = Auto, follows Windows)
  * 2. Custom theme: the user's hex colors become --c-* variables that the [data-theme="custom"] block mixes from
  */
 (() => {
@@ -23,7 +23,7 @@
     { key: 'done', label: 'Done tasks', token: '--md-done' },
   ];
 
-  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'custom'];
+  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'custom'];
 
   let current = { theme: 'system', custom: null };
 

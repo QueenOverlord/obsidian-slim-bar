@@ -21,6 +21,14 @@
   const btnMdMore = document.getElementById('btn-md-more');
   const mdMoreMenu = document.getElementById('md-more-menu');
 
+  // DOM Elements — Note switcher (favorites dropdown under the note pill)
+  const noteMenu = document.getElementById('note-menu');
+  const noteMenuList = document.getElementById('note-menu-list');
+  const noteMenuEmpty = document.getElementById('note-menu-empty');
+  const noteMenuError = document.getElementById('note-menu-error');
+  const btnFavAddCurrent = document.getElementById('btn-fav-add-current');
+  const btnFavBrowse = document.getElementById('btn-fav-browse');
+
   // DOM Elements — Visual Setup Panel
   const setupPanel = document.getElementById('setup-panel');
   const btnCloseSetup = document.getElementById('btn-close-setup');
@@ -49,6 +57,8 @@
   const opacitySlider = document.getElementById('opacity-slider');
 
   let currentState = null;
+  let loadedNotePath = null;
+  let noteMenuOpen = false;
 
   // One CodeMirror editor for both Normal (live preview) and Origin (raw) modes
   const editor = mdHelper.createEditor(editorHost, {
@@ -119,8 +129,12 @@
 
   function applyState(state, forceContentReload = false) {
     if (!state) return;
+    const wasExpanded = currentState ? currentState.settings.isExpanded : null;
     currentState = state;
     const { settings, note } = state;
+
+    // Expanding or collapsing resizes the window, so an open note menu closes
+    if (noteMenuOpen && wasExpanded !== settings.isExpanded) closeNoteMenu();
 
     // 1. Expand / Slim Bar class
     if (settings.isExpanded) {
@@ -143,7 +157,8 @@
 
     // 3. Single .md Note status
     if (note) {
-      activeNoteNameEl.textContent = note.fileName || 'Scratchpad.md';
+      activeNoteNameEl.textContent = (note.fileName || 'Scratchpad.md').replace(/\.md$/i, '');
+      btnNoteBadge.title = `Switch note · ${note.path}`;
       if (note.isConnectedToVault) {
         vaultStatusDot.classList.remove('disconnected');
         vaultStatusDot.classList.add('connected');
@@ -156,9 +171,18 @@
         inputNotePath.value = settings.activeNotePath || note.path || '';
       }
 
-      if (forceContentReload || !editor.hasFocus()) {
+      if (note.path !== loadedNotePath) {
+        loadedNotePath = note.path;
+        editor.loadDocument(note.content || '');
+        updateWordCount();
+      } else if (forceContentReload || !editor.hasFocus()) {
         setDocumentContent(note.content || '');
       }
+    }
+
+    if (noteMenuOpen) {
+      renderNoteMenu();
+      fitNoteMenu();
     }
 
     // 4. Global shortcuts: each box shows the saved shortcut, or why it isn't working
@@ -207,6 +231,7 @@
     if (saveTimeout) clearTimeout(saveTimeout);
 
     saveTimeout = setTimeout(async () => {
+      saveTimeout = null;
       const res = await api.writeNote(editor.getContent());
       if (res && res.ok) {
         setSaveStatus('Saved');
@@ -215,6 +240,114 @@
       }
       updateWordCount();
     }, 180);
+  }
+
+  // Before switching notes: write what was typed in the last moment to the note it belongs to
+  async function flushPendingSave() {
+    if (!saveTimeout) return;
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+    const res = await api.writeNote(editor.getContent());
+    if (!res || !res.ok) setSaveStatus('Save error', 'is-error');
+  }
+
+  // ==================== NOTE SWITCHER (favorites dropdown) ====================
+  function renderNoteMenu() {
+    const favorites = (currentState && currentState.favorites) || [];
+    noteMenuList.textContent = '';
+
+    favorites.forEach((fav) => {
+      const row = document.createElement('div');
+      row.className = 'note-menu-row';
+      row.classList.toggle('is-active', fav.isActive);
+      row.classList.toggle('is-missing', !fav.exists);
+
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'note-menu-item';
+      item.disabled = !fav.exists;
+      item.title = fav.exists ? fav.path : `File not found: ${fav.path}`;
+      item.innerHTML = '<svg class="icon icon-sm note-menu-check"><use href="#i-check"/></svg>';
+      const name = document.createElement('span');
+      name.className = 'note-menu-name';
+      name.textContent = fav.name;
+      item.appendChild(name);
+      item.addEventListener('click', () => switchToFavorite(fav));
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'note-menu-remove';
+      remove.title = 'Remove from favorites (the file is kept)';
+      remove.innerHTML = '<svg class="icon icon-sm"><use href="#i-x"/></svg>';
+      remove.addEventListener('click', () => removeFavorite(fav));
+
+      row.append(item, remove);
+      noteMenuList.appendChild(row);
+    });
+
+    noteMenuEmpty.classList.toggle('hidden', favorites.length > 0);
+    btnFavAddCurrent.classList.toggle('hidden', favorites.some((fav) => fav.isActive));
+  }
+
+  function showNoteMenuError(text) {
+    noteMenuError.textContent = text || 'Something went wrong';
+    noteMenuError.classList.remove('hidden');
+    fitNoteMenu();
+  }
+
+  async function openNoteMenu() {
+    noteMenuOpen = true;
+    slimBar.classList.remove('overflow-open');
+    noteMenuError.classList.add('hidden');
+    renderNoteMenu();
+    const pill = btnNoteBadge.getBoundingClientRect();
+    noteMenu.style.top = `${pill.bottom + 4}px`;
+    noteMenu.classList.remove('hidden');
+    // Under the pill, but never past the right edge on a narrow bar
+    noteMenu.style.left = `${Math.max(6, Math.min(pill.left, window.innerWidth - noteMenu.offsetWidth - 6))}px`;
+    btnNoteBadge.classList.add('open');
+    btnNoteBadge.setAttribute('aria-expanded', 'true');
+    await fitNoteMenu();
+  }
+
+  // Slim bar: the shell keeps its bar height and the window grows just enough to show the menu
+  async function fitNoteMenu() {
+    if (!noteMenuOpen || currentState.settings.isExpanded) return;
+    appShell.style.height = `${currentState.settings.slimHeight}px`;
+    await api.setMenuSpace(noteMenu.offsetTop + noteMenu.offsetHeight + 8);
+  }
+
+  async function closeNoteMenu() {
+    if (!noteMenuOpen) return;
+    noteMenuOpen = false;
+    noteMenu.classList.add('hidden');
+    btnNoteBadge.classList.remove('open');
+    btnNoteBadge.setAttribute('aria-expanded', 'false');
+    // Shrink first, then let the shell fill the window again (no tall empty frame)
+    if (!currentState.settings.isExpanded) await api.setMenuSpace(0);
+    appShell.style.height = '';
+  }
+
+  async function switchToFavorite(fav) {
+    if (!fav.isActive) {
+      await flushPendingSave();
+      const res = await api.switchToFavorite(fav.path);
+      if (!res.ok) {
+        applyState(res.state, false);
+        showNoteMenuError(res.error);
+        return;
+      }
+      applyState(res.state, true);
+      setSaveStatus('Synced');
+    }
+    await closeNoteMenu();
+    if (currentState.settings.isExpanded) editor.focus();
+    else quickCaptureInput.focus();
+  }
+
+  async function removeFavorite(fav) {
+    const res = await api.removeFavorite(fav.path);
+    applyState(res.state, false);
   }
 
   function setSaveStatus(text, stateClass) {
@@ -336,8 +469,31 @@
       await api.minimizeOrHide();
     });
 
-    // 5. Open Visual Setup Panel
-    btnNoteBadge.addEventListener('click', openVisualSetupPanel);
+    // 5. Note pill: switch between favorite notes
+    btnNoteBadge.addEventListener('click', () => {
+      if (noteMenuOpen) closeNoteMenu();
+      else openNoteMenu();
+    });
+
+    btnFavAddCurrent.addEventListener('click', async () => {
+      const res = await api.addFavorite();
+      applyState(res.state, false);
+      if (!res.ok) showNoteMenuError(res.error);
+    });
+
+    btnFavBrowse.addEventListener('click', async () => {
+      noteMenuError.classList.add('hidden');
+      await flushPendingSave();
+      const res = await api.browseAddFavorite();
+      applyState(res.state, false);
+      if (!res.ok) showNoteMenuError(res.error);
+      else closeNoteMenu();
+    });
+
+    // Clicking another window closes the menu (and shrinks the slim bar back)
+    window.addEventListener('blur', () => closeNoteMenu());
+
+    // 5b. Open Visual Setup Panel
     btnSettings.addEventListener('click', openVisualSetupPanel);
 
     btnCloseSetup.addEventListener('click', () => {
@@ -527,10 +683,12 @@
     document.addEventListener('mousedown', (e) => {
       if (!e.target.closest('.md-more')) mdMoreMenu.classList.add('hidden');
       if (!e.target.closest('.bar-actions')) slimBar.classList.remove('overflow-open');
+      if (!e.target.closest('#note-menu, #btn-note-badge')) closeNoteMenu();
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closeNoteMenu();
         mdMoreMenu.classList.add('hidden');
         slimBar.classList.remove('overflow-open');
       }
@@ -560,6 +718,7 @@
     });
 
     api.onQuickCapture(() => {
+      closeNoteMenu();
       setupPanel.classList.add('hidden');
       quickCaptureInput.focus();
       quickCaptureInput.select();

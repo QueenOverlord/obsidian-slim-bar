@@ -6,10 +6,11 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 
 - **Slim bar (44px):** sits at the top of your screen. Type one line and press `Enter` to add it to your note.
 - **Expanded pad:** a full Markdown editor with live preview, like Obsidian's. Switch to **Origin** to see the raw Markdown.
+- **Favorite notes:** keep up to 10 notes (one per project, say) and switch between them from the note name in the bar.
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.
 - **Opacity slider:** fade the bar so it doesn't cover what you're working on.
-- **Themes:** Dark, Light, Dracula, Solarized Light, or Auto to follow Windows. Headings, links, code and tasks each get their own color.
+- **Themes:** Dark, Light, Dracula, Solarized Light, Akira × DedSec (cyberpunk), or Auto to follow Windows. Headings, links, code and tasks each get their own color.
 - **Your own theme:** paste hex codes (or pick colors) for 12 parts of the app and the editor.
 - **Starts with Windows** (optional), so the hotkey is always ready.
 
@@ -46,7 +47,9 @@ You'll find it in the Start Menu as **Obsidian Slim Bar**.
 | Collapse back to the slim bar | `Esc` in the editor |
 | Pin / unpin on top | Pin button, or `Alt+Shift+P` |
 | Open the note in Obsidian | Arrow button in the bar |
-| Change note, shortcuts or theme | Click the note name, or the settings button |
+| Switch to another favorite note | Click the note name, then pick a note |
+| Add / remove a favorite | Note name → **Add current note** or **Add another note…**; hover a note and click `×` to remove it (the file is kept) |
+| Change note, shortcuts or theme | Settings button |
 | Hide to the tray | Minus button (the tray icon brings it back) |
 | Quit completely | Tray icon → **Quit Completely**, or **Quit** in Setup |
 

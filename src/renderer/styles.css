@@ -218,6 +218,55 @@
   --danger-text: #dc322f;
 }
 
+/* Akira × DedSec: GitHub-dark night, Akira crimson accent, DedSec cyan / acid green Markdown
+   (same palette as the akira-dedsec-palette.css Obsidian snippet) */
+[data-theme="dedsec"] {
+  color-scheme: dark;
+
+  --bg-primary: #0d1117;
+  --bg-secondary: #090c10;
+  --bg-elevated: #161b22;
+  --bg-raised: #161b22;
+  --bg-input: #090c10;
+  --bg-hover: rgba(0, 240, 255, 0.08);
+  --bg-hover-soft: rgba(0, 240, 255, 0.03);
+
+  --border-subtle: rgba(230, 237, 243, 0.08);
+  --border-strong: rgba(0, 240, 255, 0.22);
+  --border-focus: #00f0ff;
+
+  --accent: #ff1e44;
+  --accent-hover: #ff3366;
+  --accent-soft: rgba(255, 30, 68, 0.16);
+  --accent-ring: rgba(255, 30, 68, 0.42);
+  --accent-text: #00f0ff;
+  --selection: rgba(255, 30, 68, 0.3);
+  --on-accent: #ffffff;
+
+  --text-main: #e6edf3;
+  --text-muted: #b1bac4;
+  --text-dim: #6e7681;
+
+  --md-h1: #00f0ff;
+  --md-h2: #ff1e44;
+  --md-h3: #00ff88;
+  --md-bold: #ffb703;
+  --md-italic: #80d8ff;
+  --md-link: #00f0ff;
+  --md-code: #00ff88;
+  --md-bullet: #e040fb;
+  --md-done: #00ff88;
+  --md-quote: #8b949e;
+
+  --success: #00ff88;
+  --success-ring: rgba(0, 255, 136, 0.3);
+  --warning: #ffb703;
+  --warning-soft: rgba(255, 183, 3, 0.12);
+  --danger: #ff1e44;
+  --danger-soft: rgba(255, 30, 68, 0.16);
+  --danger-text: #ff6b81;
+}
+
 /* Custom: theme-manager.js sets the --c-* colors the user pasted; the surfaces are mixed from them */
 [data-theme="custom"] {
   --bg-primary: var(--c-bg);
@@ -451,6 +500,171 @@ body.mode-expanded .slim-bar {
   white-space: nowrap;
 }
 
+.note-pill .note-caret {
+  width: 12px;
+  height: 12px;
+  margin-left: -3px;
+  color: var(--text-dim);
+  transition: transform 0.15s ease;
+}
+
+.note-pill.open {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.note-pill.open .note-caret {
+  transform: rotate(180deg);
+}
+
+/* ==================== NOTE SWITCHER (favorites dropdown) ==================== */
+.note-menu {
+  position: fixed;
+  z-index: 60;
+  width: 240px;
+  max-width: calc(100vw - 12px);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px var(--shadow-pill);
+  font-size: 12px;
+}
+
+/* Expanded pad: the window is already tall, so a long list scrolls inside it */
+body.mode-expanded .note-menu {
+  max-height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+
+.note-menu-label {
+  padding: 4px 8px 2px;
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.note-menu-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius);
+}
+
+.note-menu-row:hover {
+  background: var(--bg-hover);
+}
+
+.note-menu-item,
+.note-menu-action {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-main);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-menu-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-menu-check {
+  color: var(--accent-text);
+  visibility: hidden;
+}
+
+.note-menu-row.is-active .note-menu-check {
+  visibility: visible;
+}
+
+.note-menu-row.is-active .note-menu-name {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+/* Moved or deleted file: greyed out, can only be removed */
+.note-menu-row.is-missing .note-menu-item {
+  color: var(--text-dim);
+  text-decoration: line-through;
+  cursor: default;
+}
+
+.note-menu-remove {
+  width: 24px;
+  height: 24px;
+  margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.note-menu-row:hover .note-menu-remove,
+.note-menu-row.is-missing .note-menu-remove,
+.note-menu-remove:focus-visible {
+  opacity: 1;
+}
+
+.note-menu-remove:hover {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.note-menu-empty {
+  margin: 0;
+  padding: 4px 8px 6px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.note-menu-sep {
+  height: 1px;
+  margin: 3px 4px;
+  background: var(--border-subtle);
+}
+
+.note-menu-action {
+  flex: none;
+  width: 100%;
+  color: var(--text-muted);
+}
+
+.note-menu-action:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.note-menu-error {
+  margin: 2px 4px 2px;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  line-height: 1.35;
+}
+
 /* 1-Line Instant Capture Input (the hero) */
 .quick-capture-wrap {
   flex: 1;
@@ -569,7 +783,8 @@ body.mode-expanded .expand-btn .icon {
 
 @container bar (max-width: 380px) {
   .prio-5 { display: none; }
-  .note-name { display: none; }
+  .note-name,
+  .note-pill .note-caret { display: none; }
   .note-pill { padding: 0; justify-content: center; width: 24px; min-width: 24px; }
 }
 
@@ -771,6 +986,20 @@ body.mode-slim .expanded-workspace {
 .editor-host .cm-line.cm-lp-h1 { font-size: 1.35em; padding-top: 4px; padding-bottom: 2px; color: var(--md-h1); }
 .editor-host .cm-line.cm-lp-h2 { font-size: 1.15em; padding-top: 3px; color: var(--md-h2); }
 .editor-host .cm-line.cm-lp-h3 { font-size: 1.04em; }
+
+/* Akira × DedSec extras, as in the Obsidian snippet: neon headings, glowing red cursor,
+   framed acid-green code, links without underline */
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h1 { text-shadow: 0 0 12px rgba(0, 240, 255, 0.3); }
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h2 { text-shadow: 0 0 10px rgba(255, 30, 68, 0.25); }
+[data-theme="dedsec"] .editor-host .cm-cursor {
+  border-left: 2px solid #ff1e44;
+  box-shadow: 0 0 8px #ff1e44;
+}
+[data-theme="dedsec"] .cm-lp-code {
+  background: rgba(0, 255, 136, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(0, 255, 136, 0.25);
+}
+[data-theme="dedsec"] .cm-lp-wikilink { text-decoration: none; }
 
 /* Live preview: inline formatting (inside a heading they keep the heading color) */
 .cm-lp-strong { font-weight: 700; color: var(--md-bold); }
