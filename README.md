@@ -6,6 +6,7 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 
 - **Slim bar (44px):** sits at the top of your screen. Type one line and press `Enter` to add it to your note.
 - **Expanded pad:** a full Markdown editor with live preview, like Obsidian's. Switch to **Origin** to see the raw Markdown.
+- **Code blocks with a Copy button:** wrap a message or email in ```` ``` ```` fences and it shows as a panel, like in Obsidian. One click on **Copy** puts the text on your clipboard (no fences, no `> ` quote marks).
 - **Favorite notes:** keep up to 10 notes (one per project, say) and switch between them from the note name in the bar.
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.

@@ -60,6 +60,54 @@
     }
   }
 
+  // Stands in for "```lang" while the cursor is outside the block
+  class CodeLangWidget extends WidgetType {
+    constructor(lang) {
+      super();
+      this.lang = lang;
+    }
+    eq(other) { return other.lang === this.lang; }
+    toDOM() {
+      const label = document.createElement('span');
+      label.className = 'cm-lp-codeblock-lang';
+      label.textContent = this.lang;
+      return label;
+    }
+  }
+
+  // Top-right button: copies the block's text (no fences, no "> " quote marks)
+  class CopyCodeWidget extends WidgetType {
+    constructor(text) {
+      super();
+      this.text = text;
+    }
+    eq(other) { return other.text === this.text; }
+    toDOM() {
+      const btn = document.createElement('button');
+      btn.className = 'cm-lp-codeblock-copy';
+      btn.type = 'button';
+      btn.title = 'Copy block';
+      btn.textContent = 'Copy';
+      btn.addEventListener('mousedown', (e) => e.preventDefault()); // keep the cursor where it is
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await window.slimBarAPI.copyText(this.text);
+          btn.textContent = 'Copied ✓';
+          btn.classList.add('is-copied');
+        } catch {
+          btn.textContent = 'Failed';
+        }
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('is-copied');
+        }, 1400);
+      });
+      return btn;
+    }
+    ignoreEvent() { return true; }
+  }
+
   // ==================== LIVE PREVIEW ====================
   const hide = Decoration.replace({});
   const bullet = Decoration.replace({ widget: new BulletWidget() });
@@ -94,6 +142,44 @@
     return lines;
   }
 
+  // ```fenced code``` blocks: a panel like Obsidian's, fences hidden unless the cursor is inside
+  function decorateCodeBlock(state, node, revealed, decos) {
+    const doc = state.doc;
+    const first = doc.lineAt(node.from).number;
+    const last = doc.lineAt(node.to).number;
+    const openMark = node.node.firstChild;
+    const closeMark = node.node.lastChild;
+    const hasClose = closeMark && closeMark.name === 'CodeMark' && doc.lineAt(closeMark.from).number > first;
+    const bodyEnd = hasClose ? last - 1 : last;
+
+    // A block inside "> " quotes: strip one "> " per quote level from what gets copied
+    let quoteDepth = 0;
+    for (let p = node.node.parent; p; p = p.parent) if (p.name === 'Blockquote') quoteDepth++;
+    const quoteRe = new RegExp(`^(\\s*>\\s?){0,${quoteDepth}}`);
+    const body = [];
+    for (let n = first + 1; n <= bodyEnd; n++) body.push(doc.line(n).text.replace(quoteRe, ''));
+
+    let editing = false;
+    for (let n = first; n <= last; n++) if (revealed.has(n)) editing = true;
+
+    for (let n = first; n <= last; n++) {
+      const cls = ['cm-lp-codeblock'];
+      if (n === first) cls.push('cm-lp-codeblock-begin');
+      if (n === last) cls.push('cm-lp-codeblock-end');
+      if (n === last && hasClose && !editing) cls.push('cm-lp-codeblock-fence');
+      decos.push(lineClass(cls.join(' ')).range(doc.line(n).from));
+    }
+
+    const openLine = doc.line(first);
+    if (!editing && openMark && openMark.name === 'CodeMark') {
+      const info = node.node.getChild('CodeInfo');
+      const lang = info ? state.sliceDoc(info.from, info.to) : '';
+      decos.push(Decoration.replace({ widget: new CodeLangWidget(lang) }).range(openMark.from, openLine.to));
+      if (hasClose) decos.push(hide.range(closeMark.from, closeMark.to));
+    }
+    decos.push(Decoration.widget({ widget: new CopyCodeWidget(body.join('\n')), side: 1 }).range(openLine.to));
+  }
+
   function buildDecorations(view) {
     const { state } = view;
     const decos = [];
@@ -104,6 +190,7 @@
     };
     // Include the space after a mark ("# ", "> ")
     const withSpace = (to) => (state.sliceDoc(to, to + 1) === ' ' ? to + 1 : to);
+    const codeBlocks = new Set(); // a block crossing two visible ranges is decorated once
 
     for (const { from, to } of view.visibleRanges) {
       syntaxTree(state).iterate({
@@ -116,6 +203,11 @@
             decos.push(lineClass(HEADING_LINES[name]).range(state.doc.lineAt(node.from).from));
           } else if (INLINE_MARKS[name]) {
             if (node.to > node.from) decos.push(markClass(INLINE_MARKS[name]).range(node.from, node.to));
+          } else if (name === 'FencedCode') {
+            if (!codeBlocks.has(node.from)) {
+              codeBlocks.add(node.from);
+              decorateCodeBlock(state, node, revealed, decos);
+            }
           } else if (name === 'Blockquote') {
             for (let pos = node.from; pos <= node.to; ) {
               const line = state.doc.lineAt(pos);

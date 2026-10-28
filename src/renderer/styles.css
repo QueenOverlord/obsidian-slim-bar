@@ -1070,6 +1070,70 @@ body.mode-slim .expanded-workspace {
   border-top: 1px solid var(--border-strong);
 }
 
+/* Live preview: ```fenced code``` blocks (a panel like Obsidian's, with a Copy button) */
+.editor-host .cm-line.cm-lp-codeblock {
+  position: relative;
+  margin: 0 14px;
+  padding: 0 12px;
+  background: var(--bg-elevated);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--text-main);
+}
+.editor-host .cm-line.cm-lp-codeblock.cm-lp-quote { margin-left: 28px; }
+.editor-host .cm-line.cm-lp-codeblock-begin {
+  margin-top: 4px;
+  padding-top: 4px;
+  padding-right: 72px;
+  border-radius: 6px 6px 0 0;
+}
+.editor-host .cm-line.cm-lp-codeblock-end {
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-radius: 0 0 6px 6px;
+}
+.editor-host .cm-line.cm-lp-codeblock-begin.cm-lp-codeblock-end { border-radius: 6px; }
+/* The hidden closing ``` leaves an empty line: shrink it to a bottom edge */
+.editor-host .cm-line.cm-lp-codeblock-fence { font-size: 0.45em; padding-bottom: 0; }
+
+.cm-lp-codeblock-lang {
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.cm-lp-codeblock-copy {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.cm-lp-codeblock-copy:hover { color: var(--text-main); border-color: var(--md-code); }
+.cm-lp-codeblock-copy.is-copied { color: var(--md-done); border-color: var(--md-done); }
+
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock {
+  background: rgba(0, 255, 136, 0.06);
+  box-shadow: inset 1px 0 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+}
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock-begin {
+  box-shadow: inset 1px 1px 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+}
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock-end {
+  box-shadow: inset 1px -1px 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+}
+
 /* ==================== SETUP PANEL ==================== */
 .overlay-panel {
   position: absolute;

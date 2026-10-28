@@ -9,6 +9,7 @@ const {
   Tray,
   Menu,
   nativeImage,
+  clipboard,
 } = require('electron');
 const { SettingsStore, DEFAULT_SETTINGS } = require('./settings-store');
 const { VaultBridge, FAVORITES_FULL_ERROR } = require('./vault-bridge');
@@ -544,6 +545,9 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('vault:open-in-obsidian', () => vaultBridge.openInObsidian());
+
+  // Copy button on code blocks
+  ipcMain.handle('clipboard:write', (_e, text) => clipboard.writeText(String(text ?? '')));
 
   // Favorite notes (the note pill's dropdown)
   ipcMain.handle('favorites:add', (_e, rawPath) => {

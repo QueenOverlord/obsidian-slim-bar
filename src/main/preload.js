@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   browseNoteFile: () => ipcRenderer.invoke('vault:browse-note'),
   setNotePath: (rawPath) => ipcRenderer.invoke('vault:set-note-path', rawPath),
   openInObsidian: () => ipcRenderer.invoke('vault:open-in-obsidian'),
+  copyText: (text) => ipcRenderer.invoke('clipboard:write', text),
 
   // Favorite notes (the note pill's dropdown)
   addFavorite: (rawPath) => ipcRenderer.invoke('favorites:add', rawPath),
