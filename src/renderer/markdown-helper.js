@@ -17,6 +17,8 @@
   const External = Annotation.define();
   // Tells the table / math blocks that the editor gained or lost focus
   const FocusChange = Annotation.define();
+  // Folds or unfolds the callout whose title line starts at this position
+  const FoldToggle = Annotation.define();
 
   // ==================== WIDGETS ====================
   class BulletWidget extends WidgetType {
@@ -177,6 +179,114 @@
     ignoreEvent() { return false; } // clicks reach the editor: links open, the table opens for editing
   }
 
+  // ==================== CALLOUTS ====================
+  // > [!type]± Title — Obsidian's callout types, their aliases, color and icon (Lucide paths)
+  const CALLOUT_TYPES = {
+    note: { color: 'blue', icon: 'pencil' },
+    abstract: { color: 'cyan', icon: 'clipboard' }, summary: 'abstract', tldr: 'abstract',
+    info: { color: 'blue', icon: 'info' },
+    todo: { color: 'blue', icon: 'circle-check' },
+    tip: { color: 'cyan', icon: 'flame' }, hint: 'tip', important: 'tip',
+    success: { color: 'green', icon: 'check' }, check: 'success', done: 'success',
+    question: { color: 'orange', icon: 'help' }, help: 'question', faq: 'question',
+    warning: { color: 'orange', icon: 'alert' }, caution: 'warning', attention: 'warning',
+    failure: { color: 'red', icon: 'x' }, fail: 'failure', missing: 'failure',
+    danger: { color: 'red', icon: 'zap' }, error: 'danger',
+    bug: { color: 'red', icon: 'bug' },
+    example: { color: 'purple', icon: 'list' },
+    quote: { color: 'gray', icon: 'quote' }, cite: 'quote',
+  };
+  const CALLOUT_ICONS = {
+    pencil: ['M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z'],
+    clipboard: ['M9 2h6v4H9z', 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'M12 11h4', 'M12 16h4', 'M8 11h.01', 'M8 16h.01'],
+    info: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M12 16v-4', 'M12 8h.01'],
+    'circle-check': ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'm9 12 2 2 4-4'],
+    flame: ['M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z'],
+    check: ['M20 6 9 17l-5-5'],
+    help: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3', 'M12 17h.01'],
+    alert: ['m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3', 'M12 9v4', 'M12 17h.01'],
+    x: ['M18 6 6 18', 'm6 6 12 12'],
+    zap: ['M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z'],
+    bug: ['M9 7.13v-1a3 3 0 1 1 6 0v1', 'M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6', 'M12 20v-9', 'M6 13H2', 'M22 13h-4', 'M6.53 9C4.6 8.8 3 7.1 3 5', 'M20.97 5c0 2.1-1.6 3.8-3.5 4'],
+    list: ['M3 6h.01', 'M3 12h.01', 'M3 18h.01', 'M8 6h13', 'M8 12h13', 'M8 18h13'],
+    quote: ['M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z', 'M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z'],
+    chevron: ['m6 9 6 6 6-6'],
+  };
+  const CALLOUT_RE = /^(\s*>\s*)\[!([\w-]+)\]([+-]?)\s*(.*)$/;
+
+  function calloutType(name) {
+    let type = name.toLowerCase();
+    if (typeof CALLOUT_TYPES[type] === 'string') type = CALLOUT_TYPES[type];
+    return CALLOUT_TYPES[type] ? { name: type, ...CALLOUT_TYPES[type] } : { name: type, ...CALLOUT_TYPES.note };
+  }
+
+  // The callout starting on this line, or null: { type, fold: '' | '+' | '-', title, prefixLength }
+  function parseCallout(lineText) {
+    const m = lineText.match(CALLOUT_RE);
+    if (!m) return null;
+    const prefixLength = lineText.length - m[4].length;
+    return { type: calloutType(m[2]), rawType: m[2], fold: m[3], title: m[4], prefixLength };
+  }
+
+  function svgIcon(name, cls) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('class', cls);
+    for (const d of CALLOUT_ICONS[name]) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      svg.appendChild(path);
+    }
+    return svg;
+  }
+
+  // Stands in for "> [!type]± ": the icon, plus the type's name when the callout has no title
+  class CalloutTitleWidget extends WidgetType {
+    constructor(icon, defaultTitle) {
+      super();
+      this.icon = icon;
+      this.defaultTitle = defaultTitle;
+    }
+    eq(other) { return other.icon === this.icon && other.defaultTitle === this.defaultTitle; }
+    toDOM() {
+      const wrap = document.createElement('span');
+      wrap.className = 'cm-lp-callout-head';
+      wrap.appendChild(svgIcon(this.icon, 'cm-lp-callout-icon'));
+      if (this.defaultTitle) wrap.appendChild(document.createTextNode(this.defaultTitle));
+      return wrap;
+    }
+  }
+
+  // The fold arrow at the end of a foldable callout's title
+  class CalloutFoldWidget extends WidgetType {
+    constructor(folded) {
+      super();
+      this.folded = folded;
+    }
+    eq(other) { return other.folded === this.folded; }
+    toDOM(view) {
+      const btn = document.createElement('span');
+      btn.className = `cm-lp-callout-fold${this.folded ? ' is-folded' : ''}`;
+      btn.title = this.folded ? 'Unfold' : 'Fold';
+      btn.appendChild(svgIcon('chevron', 'cm-lp-callout-chevron'));
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const titleLine = view.state.doc.lineAt(view.posAtDOM(btn));
+        view.dispatch({ annotations: FoldToggle.of(titleLine.from) });
+      });
+      return btn;
+    }
+    ignoreEvent() { return true; }
+  }
+
+  // Is this callout folded right now? "-" starts folded, "+" open; a click on the arrow flips it
+  function isFolded(state, titleFrom, fold) {
+    if (!fold) return false;
+    const field = state.field(blockPreview, false);
+    const flipped = field ? field.flipped.has(titleFrom) : false;
+    return (fold === '-') !== flipped;
+  }
+
   // ==================== LIVE PREVIEW ====================
   const hide = Decoration.replace({});
   const bullet = Decoration.replace({ widget: new BulletWidget() });
@@ -272,11 +382,26 @@
   }
 
   // Tables and $$display math$$ replace whole lines, which only a state field may do
-  function buildBlocks(state, focused) {
+  function buildBlocks(state, focused, flipped) {
     const decos = [];
     const doc = state.doc;
     syntaxTree(state).iterate({
       enter: (node) => {
+        if (node.name === 'Blockquote') {
+          // A folded callout shows only its title (the body comes back if the cursor gets into it)
+          const title = doc.lineAt(node.from);
+          const callout = parseCallout(title.text);
+          if (!callout || !callout.fold) return undefined;
+          const folded = (callout.fold === '-') !== flipped.has(title.from);
+          const last = doc.lineAt(node.to);
+          if (folded && last.number > title.number) {
+            const bodyFrom = doc.line(title.number + 1).from;
+            if (!blockRevealed(state, focused, bodyFrom, last.to)) {
+              decos.push(Decoration.replace({ block: true }).range(bodyFrom, last.to));
+            }
+          }
+          return undefined;
+        }
         if (node.name === 'Table') {
           const from = doc.lineAt(node.from).from;
           const to = doc.lineAt(node.to).to;
@@ -300,19 +425,29 @@
   }
 
   const blockPreview = StateField.define({
-    create: (state) => ({ focused: false, decos: buildBlocks(state, false) }),
+    create: (state) => ({ focused: false, flipped: new Set(), decos: buildBlocks(state, false, new Set()) }),
     update(value, tr) {
       const focus = tr.annotation(FocusChange);
+      const toggle = tr.annotation(FoldToggle);
       const focused = focus === undefined ? value.focused : focus;
       if (
         focus === undefined &&
+        toggle === undefined &&
         !tr.docChanged &&
         !tr.selection &&
         syntaxTree(tr.startState) === syntaxTree(tr.state)
       ) {
         return value;
       }
-      return { focused, decos: buildBlocks(tr.state, focused) };
+      // Fold choices follow their callout when text is added above it
+      let flipped = value.flipped;
+      if (tr.docChanged) flipped = new Set([...flipped].map((pos) => tr.changes.mapPos(pos)));
+      if (toggle !== undefined) {
+        flipped = new Set(flipped);
+        if (flipped.has(toggle)) flipped.delete(toggle);
+        else flipped.add(toggle);
+      }
+      return { focused, flipped, decos: buildBlocks(tr.state, focused, flipped) };
     },
     provide: (field) => EditorView.decorations.from(field, (value) => value.decos),
   });
@@ -375,6 +510,30 @@
     }
   }
 
+  // A callout: colored panel lines, the icon in place of "> [!type]± ", a fold arrow if it has + or -
+  function decorateCallout(state, node, title, callout, titleHidden, decos) {
+    const doc = state.doc;
+    const last = doc.lineAt(node.to);
+    const folded = isFolded(state, title.from, callout.fold);
+    const color = `cm-lp-callout-${callout.type.color}`;
+    for (let n = title.number; n <= last.number; n++) {
+      const cls = ['cm-lp-callout', color];
+      if (n === title.number) cls.push('cm-lp-callout-title');
+      if (n === last.number || (n === title.number && folded)) cls.push('cm-lp-callout-end');
+      decos.push(lineClass(cls.join(' ')).range(doc.line(n).from));
+    }
+    if (titleHidden) {
+      const name = callout.rawType;
+      const defaultTitle = callout.title.trim() ? '' : name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+      decos.push(
+        Decoration.replace({ widget: new CalloutTitleWidget(callout.type.icon, defaultTitle) }).range(title.from, title.from + callout.prefixLength)
+      );
+    }
+    if (callout.fold) {
+      decos.push(Decoration.widget({ widget: new CalloutFoldWidget(folded), side: 1 }).range(title.to));
+    }
+  }
+
   function buildDecorations(view) {
     const { state } = view;
     const decos = [];
@@ -386,6 +545,7 @@
     // Include the space after a mark ("# ", "> ")
     const withSpace = (to) => (state.sliceDoc(to, to + 1) === ' ' ? to + 1 : to);
     const codeBlocks = new Set(); // a block crossing two visible ranges is decorated once
+    const calloutTitles = new Set();
 
     for (const { from, to } of view.visibleRanges) {
       syntaxTree(state).iterate({
@@ -404,15 +564,28 @@
               decorateCodeBlock(state, node, revealed, decos);
             }
           } else if (name === 'Blockquote') {
-            for (let pos = node.from; pos <= node.to; ) {
-              const line = state.doc.lineAt(pos);
-              decos.push(lineClass('cm-lp-quote').range(line.from));
-              pos = line.to + 1;
+            const title = state.doc.lineAt(node.from);
+            const callout = node.node.parent?.name === 'Blockquote' ? null : parseCallout(title.text);
+            if (callout) {
+              // A folded body splits the visible ranges, so the same callout can come up twice
+              if (!calloutTitles.has(title.from)) {
+                decorateCallout(state, node, title, callout, isHidden(title.from), decos);
+                calloutTitles.add(title.from);
+              }
+            } else {
+              for (let pos = node.from; pos <= node.to; ) {
+                const line = state.doc.lineAt(pos);
+                decos.push(lineClass('cm-lp-quote').range(line.from));
+                pos = line.to + 1;
+              }
             }
           } else if (name === 'HeaderMark') {
             if (isHidden(node.from)) hideRange(node.from, withSpace(node.to));
           } else if (name === 'QuoteMark') {
-            if (isHidden(node.from)) hideRange(node.from, withSpace(node.to));
+            // On a callout's title line the whole "> [!type] " is already swapped for the icon
+            if (isHidden(node.from) && !calloutTitles.has(state.doc.lineAt(node.from).from)) {
+              hideRange(node.from, withSpace(node.to));
+            }
           } else if (name === 'EmphasisMark' || name === 'StrikethroughMark') {
             if (isHidden(node.from)) hideRange(node.from, node.to);
           } else if (name === 'CodeMark') {
@@ -491,6 +664,7 @@
           u.viewportChanged ||
           u.selectionSet ||
           u.focusChanged ||
+          u.transactions.some((tr) => tr.annotation(FoldToggle) !== undefined) ||
           syntaxTree(u.startState) !== syntaxTree(u.state)
         ) {
           this.decorations = buildDecorations(u.view);

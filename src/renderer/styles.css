@@ -1227,6 +1227,63 @@ body.mode-slim .expanded-workspace {
   border-top: 1px solid var(--border-strong);
 }
 
+/* Live preview: callouts (> [!note] Title), colored like Obsidian's; --callout is an "r, g, b" triple */
+.cm-lp-callout-blue { --callout: 8, 109, 221; }
+.cm-lp-callout-cyan { --callout: 0, 191, 188; }
+.cm-lp-callout-green { --callout: 8, 185, 78; }
+.cm-lp-callout-orange { --callout: 236, 117, 0; }
+.cm-lp-callout-red { --callout: 233, 49, 71; }
+.cm-lp-callout-purple { --callout: 120, 82, 238; }
+.cm-lp-callout-gray { --callout: 158, 158, 158; }
+
+.editor-host .cm-line.cm-lp-callout {
+  margin: 0 14px;
+  padding: 0 12px 0 14px;
+  background: rgba(var(--callout), 0.1);
+  border-left: 3px solid rgb(var(--callout));
+  font-style: normal;
+}
+.editor-host .cm-line.cm-lp-callout-title {
+  margin-top: 6px;
+  padding-top: 6px;
+  padding-bottom: 2px;
+  border-radius: 0 6px 0 0;
+  color: rgb(var(--callout));
+  font-weight: 600;
+}
+.editor-host .cm-line.cm-lp-callout-end {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-radius: 0 0 6px 0;
+}
+.editor-host .cm-line.cm-lp-callout-title.cm-lp-callout-end { border-radius: 0 6px 6px 0; }
+
+.cm-lp-callout-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+}
+.cm-lp-callout-icon,
+.cm-lp-callout-chevron {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cm-lp-callout-fold {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -2px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.cm-lp-callout-fold:hover { opacity: 1; }
+.cm-lp-callout-fold.is-folded .cm-lp-callout-chevron { transform: rotate(-90deg); }
+
 /* Live preview: ```fenced code``` blocks (a panel like Obsidian's, with a Copy button) */
 .editor-host .cm-line.cm-lp-codeblock {
   position: relative;
