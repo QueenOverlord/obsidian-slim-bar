@@ -13,11 +13,13 @@ const {
 } = require('electron');
 const { SettingsStore, DEFAULT_SETTINGS } = require('./settings-store');
 const { VaultBridge, FAVORITES_FULL_ERROR } = require('./vault-bridge');
+const { ThemeStore } = require('./theme-store');
 
 let mainWindow = null;
 let tray = null;
 let settingsStore = null;
 let vaultBridge = null;
+let themeStore = null;
 let isSavingBounds = false;
 let isQuitting = false;
 
@@ -241,6 +243,8 @@ function getFullStatePayload() {
     settings: settingsStore.getAll(),
     note: vaultBridge.readNote(),
     favorites: vaultBridge.listFavorites(),
+    userThemes: themeStore.list(),
+    themesDir: themeStore.dir,
     hotkeyErrors,
   };
 }
@@ -546,6 +550,24 @@ function setupIpcHandlers() {
 
   ipcMain.handle('vault:open-in-obsidian', () => vaultBridge.openInObsidian());
 
+  // Your own themes: one .css file each in the themes folder
+  const themeResult = (res) => ({ ...res, state: getFullStatePayload() });
+  ipcMain.handle('themes:create', (_e, name, colors) => themeResult(themeStore.create(name, colors)));
+  ipcMain.handle('themes:save', (_e, id, colors) => themeResult(themeStore.save(id, colors)));
+  ipcMain.handle('themes:rename', (_e, id, name) => {
+    const res = themeStore.rename(id, name);
+    // The file name follows the theme name, so the saved choice follows it too
+    if (res.ok && settingsStore.get('theme') === `user:${id}`) settingsStore.update({ theme: `user:${res.id}` });
+    return themeResult(res);
+  });
+  ipcMain.handle('themes:duplicate', (_e, id) => themeResult(themeStore.duplicate(id)));
+  ipcMain.handle('themes:delete', async (_e, id) => {
+    const res = await themeStore.remove(id);
+    if (res.ok && settingsStore.get('theme') === `user:${id}`) settingsStore.update({ theme: 'system' });
+    return themeResult(res);
+  });
+  ipcMain.handle('themes:open-folder', () => themeStore.openFolder());
+
   // Copy button on code blocks
   ipcMain.handle('clipboard:write', (_e, text) => clipboard.writeText(String(text ?? '')));
 
@@ -616,11 +638,28 @@ function onReady() {
     }
   });
 
+  themeStore = new ThemeStore(() => broadcastState());
+  migrateCustomTheme();
+
   applyWindowsAutoStart(Boolean(settingsStore.get('openAtLogin')));
   setupIpcHandlers();
   createMainWindow();
   createSystemTray();
   registerGlobalHotkeys();
+}
+
+// Up to v1.4 there was one Custom theme kept in settings: it becomes the file "Custom.css"
+function migrateCustomTheme() {
+  if (settingsStore.get('themesMigrated')) return;
+  const custom = settingsStore.get('customTheme');
+  const partial = { themesMigrated: true };
+  if (custom) {
+    const { id } = themeStore.create('Custom', custom);
+    if (settingsStore.get('theme') === 'custom') partial.theme = `user:${id}`;
+  } else if (settingsStore.get('theme') === 'custom') {
+    partial.theme = 'system';
+  }
+  settingsStore.update(partial);
 }
 
 app.on('before-quit', () => {
@@ -631,6 +670,7 @@ app.on('will-quit', () => {
   // A second copy quits before it's ready, when globalShortcut can't be used yet
   if (app.isReady()) globalShortcut.unregisterAll();
   if (vaultBridge) vaultBridge.dispose();
+  if (themeStore) themeStore.dispose();
 });
 
 app.on('window-all-closed', () => {

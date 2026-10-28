@@ -38,6 +38,14 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   browseAddFavorite: () => ipcRenderer.invoke('favorites:browse-add'),
   setMenuSpace: (totalHeight) => ipcRenderer.invoke('window:menu-space', totalHeight),
 
+  // Your own themes (one .css file each)
+  createTheme: (name, colors) => ipcRenderer.invoke('themes:create', name, colors),
+  saveTheme: (id, colors) => ipcRenderer.invoke('themes:save', id, colors),
+  renameTheme: (id, name) => ipcRenderer.invoke('themes:rename', id, name),
+  duplicateTheme: (id) => ipcRenderer.invoke('themes:duplicate', id),
+  deleteTheme: (id) => ipcRenderer.invoke('themes:delete', id),
+  openThemesFolder: () => ipcRenderer.invoke('themes:open-folder'),
+
   // Events pushed from Main Process
   onStateChanged: (callback) => {
     const listener = (_event, state) => callback(state);

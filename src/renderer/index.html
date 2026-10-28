@@ -31,6 +31,8 @@
       <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></symbol>
       <symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
       <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
       <symbol id="i-arrow-top" viewBox="0 0 24 24"><path d="M5 3h14"/><path d="m18 13-6-6-6 6"/><path d="M12 7v14"/></symbol>
       <symbol id="i-sort-az" viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M20 8h-5"/><path d="M15 10V6.5a2.5 2.5 0 0 1 5 0V10"/><path d="M15 14h5l-5 6h5"/></symbol>
@@ -223,31 +225,64 @@
               </span>
               <span class="swatch-label">Solarized</span>
             </button>
-            <button class="theme-swatch" data-theme-pick="dedsec" type="button" role="radio" title="Akira × DedSec (cyberpunk)">
+            <button class="theme-swatch" data-theme-pick="dedsec" type="button" role="radio" title="DedSec (Watch Dogs)">
               <span class="swatch-preview" data-theme="dedsec">
                 <span class="swatch-aa">Aa</span>
                 <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
               </span>
               <span class="swatch-label">DedSec</span>
             </button>
-            <button class="theme-swatch" data-theme-pick="custom" type="button" role="radio" title="Your own colors">
-              <span class="swatch-preview" data-theme="custom">
+            <button class="theme-swatch" data-theme-pick="cyberpunk" type="button" role="radio" title="Cyberpunk 2077">
+              <span class="swatch-preview" data-theme="cyberpunk">
                 <span class="swatch-aa">Aa</span>
                 <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
               </span>
-              <span class="swatch-label">Custom</span>
+              <span class="swatch-label">Cyberpunk</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="akira" type="button" role="radio" title="Akira (light)">
+              <span class="swatch-preview" data-theme="akira">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Akira</span>
             </button>
           </div>
 
-          <!-- Custom theme: paste a hex code or pick a color (rows built in theme-manager.js) -->
-          <div id="custom-theme-editor" class="custom-theme hidden">
-            <div class="custom-theme-head">
-              <span class="card-help">Paste a hex code (like #ff79c6) or click a color.</span>
-              <button id="btn-custom-from-theme" class="secondary-btn" type="button" title="Start over from the Dark or Light theme">
-                <svg class="icon"><use href="#i-reset"/></svg>
-                <span>Reset</span>
+          <!-- Your own themes: one .css file each in the themes folder (theme-store.js) -->
+          <div class="my-themes-head">
+            <span class="my-themes-title">My themes</span>
+            <div class="my-themes-actions">
+              <button id="btn-theme-new" class="secondary-btn" type="button" title="New theme, starting from the colors you have now">
+                <svg class="icon"><use href="#i-plus"/></svg>
+                <span>New</span>
+              </button>
+              <button id="btn-theme-folder" class="secondary-btn" type="button" title="Open the themes folder: add, edit or paste .css files there">
+                <svg class="icon"><use href="#i-folder"/></svg>
+                <span>Open folder</span>
               </button>
             </div>
+          </div>
+          <div id="user-theme-grid" class="theme-grid" role="radiogroup" aria-label="My themes"></div>
+          <span id="user-theme-empty" class="card-help">No themes of your own yet. Click New, or put a .css file in the themes folder.</span>
+
+          <!-- Editor of the selected personal theme: every change is written to its .css file -->
+          <div id="custom-theme-editor" class="custom-theme hidden">
+            <div class="custom-theme-head">
+              <input id="user-theme-name" class="theme-name-input" type="text" maxlength="60" spellcheck="false" title="Theme name (Enter to rename)" />
+              <div class="my-themes-actions">
+                <button id="btn-theme-duplicate" class="secondary-btn icon-only-btn" type="button" title="Duplicate">
+                  <svg class="icon"><use href="#i-copy"/></svg>
+                </button>
+                <button id="btn-custom-from-theme" class="secondary-btn icon-only-btn" type="button" title="Reset to the Dark or Light colors">
+                  <svg class="icon"><use href="#i-reset"/></svg>
+                </button>
+                <button id="btn-theme-delete" class="secondary-btn icon-only-btn" type="button" title="Delete (goes to the Recycle Bin)">
+                  <svg class="icon"><use href="#i-trash"/></svg>
+                </button>
+              </div>
+            </div>
+            <span id="user-theme-file" class="card-help"></span>
+            <span id="user-theme-warning" class="card-help is-warning hidden"></span>
             <div id="custom-theme-fields" class="custom-grid"></div>
           </div>
         </div>

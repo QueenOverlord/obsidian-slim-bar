@@ -16,9 +16,11 @@ const DEFAULT_SETTINGS = {
   quickCaptureHotkey: 'Ctrl+Alt+Enter', // Quick capture: slim bar only, type + Enter, then back
   hotkeyTogglePin: 'Alt+Shift+P',
 
-  // Look: 'system' (Auto, follows Windows) | 'dark' | 'light' | 'dracula' | 'solarized-light' | 'custom'
+  // Look: 'system' (Auto, follows Windows) | 'dark' | 'light' | 'dracula' | 'solarized-light' | 'dedsec' | 'cyberpunk' | 'akira'
+  //       | 'user:<file>.css' (one of your own themes, in <userData>/themes/)
   theme: 'system',
-  customTheme: null,          // { bg, text, accent, h1, h2, h3, bold, italic, link, code, bullet, done } hex colors
+  customTheme: null,          // Up to v1.4: the single Custom theme, moved to themes/Custom.css on first start
+  themesMigrated: false,
 
   // Window Behavior & State
   isPinned: true,             // Always on Top

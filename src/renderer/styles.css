@@ -70,6 +70,7 @@
 /* Shared by the light themes: status colors, scrollbars and shadows that read on paper */
 [data-theme="light"],
 [data-theme="solarized-light"],
+[data-theme="akira"],
 [data-theme="custom"][data-scheme="light"] {
   color-scheme: light;
 
@@ -218,53 +219,144 @@
   --danger-text: #dc322f;
 }
 
-/* Akira × DedSec: GitHub-dark night, Akira crimson accent, DedSec cyan / acid green Markdown
-   (same palette as the akira-dedsec-palette.css Obsidian snippet) */
+/* DedSec (Watch Dogs): onyx black and granite, acid chartreuse accent, hyper-magenta and sky-blue Markdown */
 [data-theme="dedsec"] {
   color-scheme: dark;
 
-  --bg-primary: #0d1117;
-  --bg-secondary: #090c10;
-  --bg-elevated: #161b22;
-  --bg-raised: #161b22;
-  --bg-input: #090c10;
-  --bg-hover: rgba(0, 240, 255, 0.08);
-  --bg-hover-soft: rgba(0, 240, 255, 0.03);
+  --bg-primary: #090a0d;
+  --bg-secondary: #0d1012;
+  --bg-elevated: #171c1e;
+  --bg-raised: #171c1e;
+  --bg-input: #0d1012;
+  --bg-hover: rgba(189, 255, 37, 0.07);
+  --bg-hover-soft: rgba(189, 255, 37, 0.03);
 
-  --border-subtle: rgba(230, 237, 243, 0.08);
-  --border-strong: rgba(0, 240, 255, 0.22);
-  --border-focus: #00f0ff;
+  --border-subtle: rgba(227, 227, 227, 0.08);
+  --border-strong: rgba(84, 104, 103, 0.7);
+  --border-focus: #1ea1da;
 
-  --accent: #ff1e44;
-  --accent-hover: #ff3366;
-  --accent-soft: rgba(255, 30, 68, 0.16);
-  --accent-ring: rgba(255, 30, 68, 0.42);
-  --accent-text: #00f0ff;
-  --selection: rgba(255, 30, 68, 0.3);
+  --accent: #bdff25;
+  --accent-hover: #d0ff66;
+  --accent-soft: rgba(189, 255, 37, 0.12);
+  --accent-ring: rgba(189, 255, 37, 0.38);
+  --accent-text: #bdff25;
+  --selection: rgba(186, 3, 244, 0.32);
+  --on-accent: #090a0d;
+
+  --text-main: #e3e3e3;
+  --text-muted: #a3b0af;
+  --text-dim: #6b807f;
+
+  --md-h1: #bdff25;
+  --md-h2: #c43bf7;
+  --md-h3: #1ea1da;
+  --md-bold: #ffffff;
+  --md-italic: #8fd3f0;
+  --md-link: #1ea1da;
+  --md-code: #bdff25;
+  --md-bullet: #c43bf7;
+  --md-done: #bdff25;
+  --md-quote: #8a9a99;
+
+  --success: #bdff25;
+  --success-ring: rgba(189, 255, 37, 0.3);
+  --warning: #ffc53d;
+  --warning-soft: rgba(255, 197, 61, 0.12);
+  --danger: #ff3b5c;
+  --danger-soft: rgba(255, 59, 92, 0.16);
+  --danger-text: #ff7a90;
+}
+
+/* Cyberpunk 2077: black and raisin panels, signature yellow accent, cyan / neon Markdown */
+[data-theme="cyberpunk"] {
+  color-scheme: dark;
+
+  --bg-primary: #0b0c10;
+  --bg-secondary: #13141a;
+  --bg-elevated: #272932;
+  --bg-raised: #1d1f26;
+  --bg-input: #13141a;
+  --bg-hover: rgba(242, 233, 0, 0.07);
+  --bg-hover-soft: rgba(242, 233, 0, 0.03);
+
+  --border-subtle: rgba(209, 197, 192, 0.09);
+  --border-strong: rgba(2, 215, 242, 0.28);
+  --border-focus: #02d7f2;
+
+  --accent: #f2e900;
+  --accent-hover: #fdf500;
+  --accent-soft: rgba(242, 233, 0, 0.12);
+  --accent-ring: rgba(242, 233, 0, 0.38);
+  --accent-text: #f2e900;
+  --selection: rgba(2, 215, 242, 0.26);
+  --on-accent: #0b0c10;
+
+  --text-main: #ece6e2;
+  --text-muted: #d1c5c0;
+  --text-dim: #8a8380;
+
+  --md-h1: #fdf500;
+  --md-h2: #37ebf3;
+  --md-h3: #1ac5b0;
+  --md-bold: #e455ae;
+  --md-italic: #a98be6;
+  --md-link: #02d7f2;
+  --md-code: #e04fe2;
+  --md-bullet: #ff1111;
+  --md-done: #1ac5b0;
+  --md-quote: #a39893;
+
+  --success: #1ac5b0;
+  --success-ring: rgba(26, 197, 176, 0.3);
+  --warning: #f2e900;
+  --warning-soft: rgba(242, 233, 0, 0.12);
+  --danger: #ff1111;
+  --danger-soft: rgba(255, 17, 17, 0.16);
+  --danger-text: #ff6b6b;
+}
+
+/* Akira: parchment poster paper, Kaneda's flag-red accent, light-blue panels, black title ink */
+[data-theme="akira"] {
+  --bg-primary: #f0f1ec;
+  --bg-secondary: #e6ebea;
+  --bg-elevated: #d9e8ee;
+  --bg-raised: #f8f8f5;
+  --bg-input: #e6ebea;
+  --bg-hover: rgba(91, 30, 26, 0.06);
+  --bg-hover-soft: rgba(91, 30, 26, 0.03);
+
+  --border-subtle: rgba(91, 30, 26, 0.1);
+  --border-strong: rgba(91, 30, 26, 0.2);
+  --border-focus: #d2232a;
+
+  --accent: #d2232a;
+  --accent-hover: #b81d23;
+  --accent-soft: rgba(210, 35, 42, 0.1);
+  --accent-ring: rgba(210, 35, 42, 0.32);
+  --accent-text: #b81d23;
+  --selection: rgba(172, 211, 228, 0.6);
   --on-accent: #ffffff;
 
-  --text-main: #e6edf3;
-  --text-muted: #b1bac4;
-  --text-dim: #6e7681;
+  --text-main: #2a1513;
+  --text-muted: #5b1e1a;
+  --text-dim: #8c7370;
 
-  --md-h1: #00f0ff;
-  --md-h2: #ff1e44;
-  --md-h3: #00ff88;
-  --md-bold: #ffb703;
-  --md-italic: #80d8ff;
-  --md-link: #00f0ff;
-  --md-code: #00ff88;
-  --md-bullet: #e040fb;
-  --md-done: #00ff88;
-  --md-quote: #8b949e;
+  --md-h1: #141010;
+  --md-h2: #d2232a;
+  --md-h3: #953125;
+  --md-bold: #141010;
+  --md-italic: #953125;
+  --md-link: #2f7394;
+  --md-code: #b81d23;
+  --md-bullet: #d2232a;
+  --md-done: #2f7394;
+  --md-quote: #5b1e1a;
 
-  --success: #00ff88;
-  --success-ring: rgba(0, 255, 136, 0.3);
-  --warning: #ffb703;
-  --warning-soft: rgba(255, 183, 3, 0.12);
-  --danger: #ff1e44;
-  --danger-soft: rgba(255, 30, 68, 0.16);
-  --danger-text: #ff6b81;
+  --success: #2f7394;
+  --success-ring: rgba(47, 115, 148, 0.25);
+  --danger: #d2232a;
+  --danger-soft: rgba(210, 35, 42, 0.1);
+  --danger-text: #b81d23;
 }
 
 /* Custom: theme-manager.js sets the --c-* colors the user pasted; the surfaces are mixed from them */
@@ -987,19 +1079,25 @@ body.mode-slim .expanded-workspace {
 .editor-host .cm-line.cm-lp-h2 { font-size: 1.15em; padding-top: 3px; color: var(--md-h2); }
 .editor-host .cm-line.cm-lp-h3 { font-size: 1.04em; }
 
-/* Akira × DedSec extras, as in the Obsidian snippet: neon headings, glowing red cursor,
-   framed acid-green code, links without underline */
-[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h1 { text-shadow: 0 0 12px rgba(0, 240, 255, 0.3); }
-[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h2 { text-shadow: 0 0 10px rgba(255, 30, 68, 0.25); }
+/* DedSec extras: neon headings, glowing chartreuse cursor, framed code, links without underline */
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h1 { text-shadow: 0 0 12px rgba(189, 255, 37, 0.3); }
+[data-theme="dedsec"] .editor-host .cm-line.cm-lp-h2 { text-shadow: 0 0 10px rgba(186, 3, 244, 0.35); }
 [data-theme="dedsec"] .editor-host .cm-cursor {
-  border-left: 2px solid #ff1e44;
-  box-shadow: 0 0 8px #ff1e44;
+  border-left: 2px solid #bdff25;
+  box-shadow: 0 0 8px #bdff25;
 }
 [data-theme="dedsec"] .cm-lp-code {
-  background: rgba(0, 255, 136, 0.09);
-  box-shadow: inset 0 0 0 1px rgba(0, 255, 136, 0.25);
+  background: rgba(189, 255, 37, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(189, 255, 37, 0.22);
 }
 [data-theme="dedsec"] .cm-lp-wikilink { text-decoration: none; }
+
+/* Cyberpunk extras: yellow glow on H1, cyan cursor */
+[data-theme="cyberpunk"] .editor-host .cm-line.cm-lp-h1 { text-shadow: 0 0 12px rgba(242, 233, 0, 0.3); }
+[data-theme="cyberpunk"] .editor-host .cm-cursor { border-left: 2px solid #02d7f2; }
+
+/* Akira extras: heavy black H1 like the poster lettering */
+[data-theme="akira"] .editor-host .cm-line.cm-lp-h1 { font-weight: 900; letter-spacing: 0.01em; }
 
 /* Live preview: inline formatting (inside a heading they keep the heading color) */
 .cm-lp-strong { font-weight: 700; color: var(--md-bold); }
@@ -1124,15 +1222,17 @@ body.mode-slim .expanded-workspace {
 .cm-lp-codeblock-copy.is-copied { color: var(--md-done); border-color: var(--md-done); }
 
 [data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock {
-  background: rgba(0, 255, 136, 0.06);
-  box-shadow: inset 1px 0 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+  background: rgba(189, 255, 37, 0.05);
+  box-shadow: inset 1px 0 0 rgba(189, 255, 37, 0.25), inset -1px 0 0 rgba(189, 255, 37, 0.25);
 }
 [data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock-begin {
-  box-shadow: inset 1px 1px 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+  box-shadow: inset 1px 1px 0 rgba(189, 255, 37, 0.25), inset -1px 0 0 rgba(189, 255, 37, 0.25);
 }
 [data-theme="dedsec"] .editor-host .cm-line.cm-lp-codeblock-end {
-  box-shadow: inset 1px -1px 0 rgba(0, 255, 136, 0.25), inset -1px 0 0 rgba(0, 255, 136, 0.25);
+  box-shadow: inset 1px -1px 0 rgba(189, 255, 37, 0.25), inset -1px 0 0 rgba(189, 255, 37, 0.25);
 }
+[data-theme="cyberpunk"] .editor-host .cm-line.cm-lp-codeblock { box-shadow: inset 2px 0 0 #f2e900; }
+[data-theme="akira"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(172, 211, 228, 0.45); }
 
 /* ==================== SETUP PANEL ==================== */
 .overlay-panel {
@@ -1666,7 +1766,50 @@ kbd {
   text-align: center;
 }
 
-/* Custom theme editor */
+/* My themes: personal themes (one .css file each) under the built-in ones */
+.my-themes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.my-themes-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.my-themes-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.theme-name-input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  color: var(--text-main);
+  font-size: 12.5px;
+  font-weight: 600;
+  user-select: text;
+}
+
+.theme-name-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.card-help.is-warning { color: var(--warning); }
+
+/* Editor of the selected personal theme */
 .custom-theme {
   display: flex;
   flex-direction: column;

@@ -11,8 +11,8 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.
 - **Opacity slider:** fade the bar so it doesn't cover what you're working on.
-- **Themes:** Dark, Light, Dracula, Solarized Light, Akira × DedSec (cyberpunk), or Auto to follow Windows. Headings, links, code and tasks each get their own color.
-- **Your own theme:** paste hex codes (or pick colors) for 12 parts of the app and the editor.
+- **Themes:** Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira, or Auto to follow Windows. Headings, links, code and tasks each get their own color.
+- **Your own themes, as many as you want:** make them in the app by picking colors or pasting hex codes, or bring your own snippets as `.css` files. You can also edit the files directly. See [Your own themes](#your-own-themes).
 - **Starts with Windows** (optional), so the hotkey is always ready.
 
 > [!NOTE]
@@ -59,6 +59,38 @@ If you haven't picked a note yet, the bar writes to a scratch file in its settin
 
 ---
 
+## Your own themes
+
+Each theme of your own is one `.css` file in `%APPDATA%\obsidian-slim-bar\themes\`. They show up under **My themes** in Setup.
+
+- **In the app:** Setup → **My themes** → **New**. It starts from the colors you have now. Pick colors or paste hex codes; every change is saved to the theme's file. You can rename, duplicate or delete it (deleted files go to the Recycle Bin).
+- **With your own snippets:** click **Open folder** and drop a `.css` file in. It appears right away.
+- **In the files:** open any theme file in your editor and change it. The bar updates as soon as you save.
+
+A theme only needs these 12 colors. Any you leave out are taken from Dark or Light, whichever matches your background:
+
+```css
+/* Theme: Synthwave */
+:root {
+  --bg: #1a1033;
+  --text: #f0e6ff;
+  --accent: #ff2bd6;
+  --h1: #ffd319;
+  --h2: #ff2bd6;
+  --h3: #00e5ff;
+  --bold: #ffb86c;
+  --italic: #c9b8ff;
+  --link: #00e5ff;
+  --code: #9dff6b;
+  --bullet: #ff2bd6;
+  --done: #9dff6b;
+}
+```
+
+For finer control, you can also set any full token from `src/renderer/styles.css`, like `--bg-elevated`, `--md-quote` or `--selection`. Colors can be hex, `rgb()` or `hsl()`. Lines that aren't colors are skipped, and Setup tells you which ones. Your old Custom theme from v1.4 moves into `Custom.css` automatically.
+
+---
+
 ## Update
 
 Quit the app from the tray icon, then run the new `Setup.exe` from the latest release. Your settings are kept.
@@ -100,11 +132,12 @@ obsidian-slim-bar/
     │   ├── main.js            # Window, always-on-top, tray, global hotkeys, start with Windows
     │   ├── vault-bridge.js    # Reads/writes the .md note and watches it for changes
     │   ├── settings-store.js  # Settings saved in %APPDATA%\obsidian-slim-bar
+    │   ├── theme-store.js     # Your own themes: one .css file each in the themes folder
     │   └── preload.js         # Safe bridge between the window and the main process
     └── renderer/
         ├── index.html         # Slim bar, setup panel, editor
         ├── styles.css         # All colors live in theme token blocks at the top
-        ├── theme-manager.js   # Active theme, Auto (follows Windows), Custom theme editor
+        ├── theme-manager.js   # Active theme, Auto (follows Windows), painting your own themes
         ├── markdown-helper.js # CodeMirror editor, live preview, toolbar actions
         ├── app.js             # UI state, hotkey recorder, events
         └── vendor/

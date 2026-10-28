@@ -1,13 +1,14 @@
 /**
  * Theme Manager — picks the active token block in styles.css via <html data-theme="…">.
- * 1. Built-in themes: Dark, Light, Dracula, Solarized Light, Akira × DedSec ("system" = Auto, follows Windows)
- * 2. Custom theme: the user's hex colors become --c-* variables that the [data-theme="custom"] block mixes from
+ * 1. Built-in themes: Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira ("system" = Auto, follows Windows)
+ * 2. Your own themes ("user:<file>.css"): the file's 12 basic colors become --c-* variables that the
+ *    [data-theme="custom"] block mixes the surfaces from; any full token in the file (--bg-elevated …) wins over the mix.
  */
 (() => {
   const root = document.documentElement;
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-  // Editable colors of the Custom theme, and the token each one is seeded from
+  // The 12 basic colors of a personal theme, and the full token each one stands for
   const CUSTOM_FIELDS = [
     { key: 'bg', label: 'Background', token: '--bg-primary' },
     { key: 'text', label: 'Text', token: '--text-main' },
@@ -23,9 +24,9 @@
     { key: 'done', label: 'Done tasks', token: '--md-done' },
   ];
 
-  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'custom'];
+  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'cyberpunk', 'akira'];
 
-  let current = { theme: 'system', custom: null };
+  let current = { theme: 'system', userThemes: [] };
 
   // "#abc", "abc", "#aabbcc", "aabbcc" -> "#aabbcc"; anything else -> null
   function normalizeHex(value) {
@@ -44,11 +45,25 @@
   }
 
   function resolve(theme) {
-    if (theme === 'system') return systemDark.matches ? 'dark' : 'light';
-    return THEMES.includes(theme) ? theme : 'dark';
+    if (theme === 'system' || !THEMES.includes(theme)) return systemDark.matches ? 'dark' : 'light';
+    return theme;
   }
 
-  // Reads a built-in theme's colors, to seed the Custom theme from it
+  // Any CSS color ("rgb(…)", "hsl(…)", "#abc") -> "#rrggbb", read back through the browser
+  const colorProbe = document.createElement('span');
+  function toHex(value) {
+    const hex = normalizeHex(value);
+    if (hex) return hex;
+    colorProbe.style.color = '';
+    colorProbe.style.color = String(value || '');
+    if (!colorProbe.style.color) return null;
+    document.body.appendChild(colorProbe);
+    const rgb = getComputedStyle(colorProbe).color.match(/\d+(\.\d+)?/g);
+    colorProbe.remove();
+    return rgb ? `#${rgb.slice(0, 3).map((n) => Math.round(+n).toString(16).padStart(2, '0')).join('')}` : null;
+  }
+
+  // Reads a built-in theme's colors, to start a new personal theme from it
   function readTheme(theme) {
     const probe = document.createElement('div');
     probe.dataset.theme = resolve(theme);
@@ -63,24 +78,57 @@
     return colors;
   }
 
-  // Custom colors live on <html> even when another theme is active, so the Custom swatch previews them
-  function applyCustomColors(custom) {
-    if (!custom) return;
-    CUSTOM_FIELDS.forEach(({ key }) => {
-      const hex = normalizeHex(custom[key]);
-      if (hex) root.style.setProperty(`--c-${key}`, hex);
+  // A personal theme's 12 basic colors as hex: from "--bg", or the full token ("--bg-primary"),
+  // or else from Dark / Light (whichever matches its background)
+  function colorsOf(userTheme) {
+    const vars = (userTheme && userTheme.vars) || {};
+    const pick = ({ key, token }) => toHex(vars[key]) || toHex(vars[token.slice(2)]);
+    const bg = pick(CUSTOM_FIELDS[0]);
+    const base = readTheme(bg && luminance(bg) > 0.4 ? 'light' : 'dark');
+    const colors = {};
+    CUSTOM_FIELDS.forEach((field) => {
+      colors[field.key] = pick(field) || base[field.key];
     });
-    const bg = normalizeHex(custom.bg) || '#16161e';
-    const accent = normalizeHex(custom.accent) || '#7c3aed';
-    root.style.setProperty('--c-on-accent', luminance(accent) > 0.45 ? '#16161e' : '#ffffff');
-    root.dataset.scheme = luminance(bg) > 0.4 ? 'light' : 'dark';
+    return colors;
   }
 
-  function apply(theme, custom) {
-    current = { theme: THEMES.includes(theme) ? theme : 'system', custom: custom || null };
-    // Before any custom colors are saved, the Custom swatch previews the Dark theme
-    applyCustomColors(current.custom || readTheme('dark'));
-    root.dataset.theme = resolve(current.theme);
+  // Paints a personal theme on an element: <html> for the whole app, or one swatch preview
+  function paint(el, userTheme) {
+    (el._themeProps || []).forEach((prop) => el.style.removeProperty(prop));
+    const props = [];
+    const set = (prop, value) => {
+      el.style.setProperty(prop, value);
+      props.push(prop);
+    };
+    const colors = colorsOf(userTheme);
+    CUSTOM_FIELDS.forEach(({ key }) => set(`--c-${key}`, colors[key]));
+    set('--c-on-accent', luminance(colors.accent) > 0.45 ? '#16161e' : '#ffffff');
+    // Full tokens from the file win over the colors mixed from the basics
+    const basics = new Set(CUSTOM_FIELDS.map(({ key }) => key));
+    Object.entries(userTheme.vars || {}).forEach(([name, value]) => {
+      if (!basics.has(name)) set(`--${name}`, value);
+    });
+    el._themeProps = props;
+    el.dataset.theme = 'custom';
+    el.dataset.scheme = luminance(colors.bg) > 0.4 ? 'light' : 'dark';
+  }
+
+  function findUserTheme(theme, userThemes) {
+    if (!String(theme).startsWith('user:')) return null;
+    return (userThemes || []).find((t) => `user:${t.id}` === theme) || null;
+  }
+
+  function apply(theme, userThemes) {
+    current = { theme: theme || 'system', userThemes: userThemes || [] };
+    const userTheme = findUserTheme(current.theme, current.userThemes);
+    if (userTheme) {
+      paint(root, userTheme);
+    } else {
+      (root._themeProps || []).forEach((prop) => root.style.removeProperty(prop));
+      root._themeProps = [];
+      delete root.dataset.scheme;
+      root.dataset.theme = resolve(current.theme);
+    }
     // After the first theme is painted, turn color fades back on
     if (root.classList.contains('theme-loading')) {
       requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-loading')));
@@ -89,7 +137,7 @@
 
   // Auto: follow Windows when it switches between light and dark
   systemDark.addEventListener('change', () => {
-    if (current.theme === 'system') apply(current.theme, current.custom);
+    if (current.theme === 'system') apply(current.theme, current.userThemes);
   });
 
   /**
@@ -158,10 +206,14 @@
 
   window.ThemeManager = {
     apply,
+    paint,
+    colorsOf,
+    findUserTheme,
     readTheme,
     resolve,
     normalizeHex,
     buildCustomEditor,
+    fields: CUSTOM_FIELDS,
     isLightCustom: () => root.dataset.scheme === 'light',
   };
 })();

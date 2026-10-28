@@ -45,10 +45,19 @@
   const hotkeyBoxes = document.querySelectorAll('[data-hotkey]');
   const hotkeyResetButtons = document.querySelectorAll('[data-hotkey-reset]');
 
-  const themeSwatches = document.querySelectorAll('#theme-grid [data-theme-pick]');
+  const themeGrid = document.getElementById('theme-grid');
+  const userThemeGrid = document.getElementById('user-theme-grid');
+  const userThemeEmpty = document.getElementById('user-theme-empty');
+  const btnThemeNew = document.getElementById('btn-theme-new');
+  const btnThemeFolder = document.getElementById('btn-theme-folder');
   const customThemeEditor = document.getElementById('custom-theme-editor');
   const customThemeFields = document.getElementById('custom-theme-fields');
+  const userThemeName = document.getElementById('user-theme-name');
+  const userThemeFile = document.getElementById('user-theme-file');
+  const userThemeWarning = document.getElementById('user-theme-warning');
+  const btnThemeDuplicate = document.getElementById('btn-theme-duplicate');
   const btnCustomFromTheme = document.getElementById('btn-custom-from-theme');
+  const btnThemeDelete = document.getElementById('btn-theme-delete');
   const checkboxOpenAtLogin = document.getElementById('checkbox-open-at-login');
   const btnSaveSetup = document.getElementById('btn-save-setup');
   const btnQuitApp = document.getElementById('btn-quit-app');
@@ -75,18 +84,62 @@
   let recordingBox = null;
   let saveTimeout = null;
   let customSaveTimeout = null;
-  let customTheme = null;
+  let pendingColors = {}; // color edits not yet written to the theme's .css file
 
-  // Custom theme rows: every valid color applies live and saves shortly after you stop typing
+  const activeUserTheme = () =>
+    currentState ? themes.findUserTheme(currentState.settings.theme, currentState.userThemes) : null;
+
+  // Personal theme rows: every valid color applies live and is written to its .css file
+  // shortly after you stop typing
   const customEditor = themes.buildCustomEditor(customThemeFields, (key, hex) => {
-    customTheme = { ...customTheme, [key]: hex };
-    themes.apply('custom', customTheme);
+    const userTheme = activeUserTheme();
+    if (!userTheme) return;
+    pendingColors[key] = hex;
+    // If the file sets the full token too (e.g. --md-h1), change it as well, or it would hide the edit
+    const token = themes.fields.find((f) => f.key === key).token.slice(2);
+    if (token in userTheme.vars) pendingColors[token] = hex;
+    Object.assign(userTheme.vars, pendingColors);
+    themes.apply(currentState.settings.theme, currentState.userThemes);
+    const swatch = userThemeGrid.querySelector(`[data-theme-pick="user:${CSS.escape(userTheme.id)}"] .swatch-preview`);
+    if (swatch) themes.paint(swatch, userTheme);
     if (customSaveTimeout) clearTimeout(customSaveTimeout);
-    customSaveTimeout = setTimeout(() => {
+    customSaveTimeout = setTimeout(async () => {
+      const changes = pendingColors;
+      pendingColors = {};
+      const res = await api.saveTheme(userTheme.id, changes);
       customSaveTimeout = null;
-      api.updateSettings({ customTheme });
+      applyState(res.state, false);
     }, 300);
   });
+
+  // "My themes" swatches, each painted with its own colors
+  function renderUserThemes() {
+    const list = currentState.userThemes || [];
+    userThemeGrid.replaceChildren(
+      ...list.map((userTheme) => {
+        const btn = document.createElement('button');
+        btn.className = 'theme-swatch';
+        btn.type = 'button';
+        btn.setAttribute('role', 'radio');
+        btn.dataset.themePick = `user:${userTheme.id}`;
+        btn.title = `${userTheme.name} (themes\\${userTheme.id})`;
+        const preview = document.createElement('span');
+        preview.className = 'swatch-preview';
+        preview.innerHTML = '<span class="swatch-aa">Aa</span><span class="swatch-dots"><i></i><i></i><i></i><i></i></span>';
+        themes.paint(preview, userTheme);
+        const label = document.createElement('span');
+        label.className = 'swatch-label';
+        label.textContent = userTheme.name;
+        btn.append(preview, label);
+        return btn;
+      })
+    );
+    userThemeEmpty.classList.toggle('hidden', list.length > 0);
+  }
+
+  async function chooseTheme(theme) {
+    applyState(await api.updateSettings({ theme }), false);
+  }
 
   async function init() {
     const state = await api.getState();
@@ -204,18 +257,26 @@
     quickCaptureInput.title = `Type + Enter to add a line (${settings.universalHotkey} to expand)`;
     btnExpand.title = `Expand / collapse (${settings.universalHotkey})`;
 
-    // 5. Theme picker + Custom theme editor
+    // 5. Theme picker + My themes + the selected personal theme's editor
     const theme = settings.theme || 'system';
-    // While a color edit is waiting to save, the local colors are newer than the saved ones
-    if (!customSaveTimeout) customTheme = settings.customTheme || customTheme;
-    themes.apply(theme, customTheme);
-    themeSwatches.forEach((btn) => {
+    const userTheme = activeUserTheme();
+    // While a color edit is waiting to save, the local colors are newer than the file's
+    if (userTheme) Object.assign(userTheme.vars, pendingColors);
+    themes.apply(theme, state.userThemes);
+    renderUserThemes();
+    document.querySelectorAll('#theme-grid [data-theme-pick], #user-theme-grid [data-theme-pick]').forEach((btn) => {
       const isActive = btn.dataset.themePick === theme;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-checked', String(isActive));
     });
-    customThemeEditor.classList.toggle('hidden', theme !== 'custom');
-    if (customTheme) customEditor.setValues(customTheme);
+    customThemeEditor.classList.toggle('hidden', !userTheme);
+    if (userTheme) {
+      if (document.activeElement !== userThemeName) userThemeName.value = userTheme.name;
+      userThemeFile.textContent = `Saved in themes\\${userTheme.id}. You can also edit that file directly.`;
+      userThemeWarning.textContent = `Skipped, not a color: ${userTheme.skipped.join(', ')}`;
+      userThemeWarning.classList.toggle('hidden', !userTheme.skipped.length);
+      if (!customSaveTimeout) customEditor.setValues(themes.colorsOf(userTheme));
+    }
 
     checkboxOpenAtLogin.checked = Boolean(settings.openAtLogin);
     const savedOpacity =
@@ -651,25 +712,74 @@
     });
 
     // 7b. Theme: applies and saves instantly, no need to press Save
-    themeSwatches.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const theme = btn.dataset.themePick;
-        const partial = { theme };
-        // First time on Custom: start from the colors of the theme you were on
-        if (theme === 'custom' && !customTheme) {
-          partial.customTheme = themes.readTheme(currentState.settings.theme || 'system');
-        }
-        const updated = await api.updateSettings(partial);
-        applyState(updated, false);
+    [themeGrid, userThemeGrid].forEach((grid) => {
+      grid.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-theme-pick]');
+        if (btn) chooseTheme(btn.dataset.themePick);
       });
     });
 
-    // 7c. Custom theme Reset: back to the Dark or Light colors, whichever is closer
+    // 7c. My themes: New starts from the colors you have now
+    btnThemeNew.addEventListener('click', async () => {
+      const theme = currentState.settings.theme || 'system';
+      const from = activeUserTheme();
+      const colors = from ? themes.colorsOf(from) : themes.readTheme(theme);
+      const names = new Set((currentState.userThemes || []).map((t) => t.name.toLowerCase()));
+      let name = 'My theme';
+      for (let n = 2; names.has(name.toLowerCase()); n++) name = `My theme ${n}`;
+      const res = await api.createTheme(name, colors);
+      if (res.ok) await chooseTheme(`user:${res.id}`);
+      userThemeName.focus();
+      userThemeName.select();
+    });
+
+    btnThemeFolder.addEventListener('click', () => api.openThemesFolder());
+
+    // Rename on Enter or when leaving the box; Escape puts the old name back
+    userThemeName.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') userThemeName.blur();
+      if (e.key === 'Escape') {
+        const userTheme = activeUserTheme();
+        if (userTheme) userThemeName.value = userTheme.name;
+        userThemeName.blur();
+      }
+    });
+    userThemeName.addEventListener('blur', async () => {
+      const userTheme = activeUserTheme();
+      const name = userThemeName.value.trim();
+      if (!userTheme || !name || name === userTheme.name) {
+        if (userTheme) userThemeName.value = userTheme.name;
+        return;
+      }
+      const res = await api.renameTheme(userTheme.id, name);
+      applyState(res.state, false);
+    });
+
+    btnThemeDuplicate.addEventListener('click', async () => {
+      const userTheme = activeUserTheme();
+      if (!userTheme) return;
+      const res = await api.duplicateTheme(userTheme.id);
+      if (res.ok) await chooseTheme(`user:${res.id}`);
+    });
+
+    // Reset: back to the Dark or Light colors, whichever is closer
     btnCustomFromTheme.addEventListener('click', async () => {
-      const base = themes.isLightCustom() ? 'light' : 'dark';
-      const updated = await api.updateSettings({ customTheme: themes.readTheme(base) });
-      customTheme = updated.settings.customTheme;
-      applyState(updated, false);
+      const userTheme = activeUserTheme();
+      if (!userTheme) return;
+      const base = themes.readTheme(themes.isLightCustom() ? 'light' : 'dark');
+      const colors = { ...base };
+      themes.fields.forEach(({ key, token }) => {
+        if (token.slice(2) in userTheme.vars) colors[token.slice(2)] = base[key];
+      });
+      const res = await api.saveTheme(userTheme.id, colors);
+      applyState(res.state, false);
+    });
+
+    btnThemeDelete.addEventListener('click', async () => {
+      const userTheme = activeUserTheme();
+      if (!userTheme || !window.confirm(`Delete "${userTheme.name}"? The file goes to the Recycle Bin.`)) return;
+      const res = await api.deleteTheme(userTheme.id);
+      applyState(res.state, false);
     });
 
     // 8. Save Visual Setup Panel
