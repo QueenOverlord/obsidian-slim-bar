@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('slimBarAPI', {
   // Favorite notes (the note pill's dropdown)
   addFavorite: (rawPath) => ipcRenderer.invoke('favorites:add', rawPath),
   removeFavorite: (filePath) => ipcRenderer.invoke('favorites:remove', filePath),
+  reorderFavorites: (orderedPaths) => ipcRenderer.invoke('favorites:reorder', orderedPaths),
   switchToFavorite: (filePath) => ipcRenderer.invoke('favorites:switch', filePath),
   browseAddFavorite: () => ipcRenderer.invoke('favorites:browse-add'),
   setMenuSpace: (totalHeight) => ipcRenderer.invoke('window:menu-space', totalHeight),

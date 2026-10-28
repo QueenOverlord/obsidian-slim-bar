@@ -49,6 +49,7 @@ You'll find it in the Start Menu as **Obsidian Slim Bar**.
 | Open the note in Obsidian | Arrow button in the bar |
 | Switch to another favorite note | Click the note name, then pick a note |
 | Add / remove a favorite | Note name → **Add current note** or **Add another note…**; hover a note and click `×` to remove it (the file is kept) |
+| Reorder or clean up favorites | Settings → **Favorites**: `⤒` to the top, `↑` up one, `×` remove, or **Sort A–Z** |
 | Change note, shortcuts or theme | Settings button |
 | Hide to the tray | Minus button (the tray icon brings it back) |
 | Quit completely | Tray icon → **Quit Completely**, or **Quit** in Setup |

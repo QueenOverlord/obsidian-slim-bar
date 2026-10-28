@@ -556,6 +556,11 @@ function setupIpcHandlers() {
     return { ok: true, state: getFullStatePayload() };
   });
 
+  ipcMain.handle('favorites:reorder', (_e, orderedPaths) => {
+    vaultBridge.reorderFavorites(orderedPaths);
+    return { ok: true, state: getFullStatePayload() };
+  });
+
   ipcMain.handle('favorites:switch', (_e, filePath) => {
     const res = vaultBridge.switchToFavorite(filePath);
     return { ok: res.ok, error: res.error, state: getFullStatePayload() };

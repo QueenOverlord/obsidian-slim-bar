@@ -29,6 +29,12 @@
   const btnFavAddCurrent = document.getElementById('btn-fav-add-current');
   const btnFavBrowse = document.getElementById('btn-fav-browse');
 
+  // DOM Elements — Favorites list in Setup (remove, reorder, sort)
+  const favManagerList = document.getElementById('fav-manager-list');
+  const favManagerEmpty = document.getElementById('fav-manager-empty');
+  const favCount = document.getElementById('fav-count');
+  const btnFavSort = document.getElementById('btn-fav-sort');
+
   // DOM Elements — Visual Setup Panel
   const setupPanel = document.getElementById('setup-panel');
   const btnCloseSetup = document.getElementById('btn-close-setup');
@@ -184,6 +190,7 @@
       renderNoteMenu();
       fitNoteMenu();
     }
+    renderFavoritesManager();
 
     // 4. Global shortcuts: each box shows the saved shortcut, or why it isn't working
     const hotkeyErrors = state.hotkeyErrors || {};
@@ -350,6 +357,72 @@
     applyState(res.state, false);
   }
 
+  // ==================== FAVORITES IN SETUP (remove, up one, to the top, A–Z) ====================
+  function favIconButton(icon, title, onClick, disabled = false) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'fav-row-btn';
+    btn.title = title;
+    btn.disabled = disabled;
+    btn.innerHTML = `<svg class="icon icon-sm"><use href="#${icon}"/></svg>`;
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  // "C:\Users\…\Vault\1 - Fleeting Notes\Idea.md" -> "…\Vault\1 - Fleeting Notes" (full path on hover)
+  function shortFolder(filePath) {
+    const folders = filePath.split(/[\\/]/).slice(0, -1);
+    return folders.length > 3 ? `…\\${folders.slice(-3).join('\\')}` : folders.join('\\');
+  }
+
+  function renderFavoritesManager() {
+    const favorites = (currentState && currentState.favorites) || [];
+    favManagerList.textContent = '';
+    favCount.textContent = `${favorites.length}/10`;
+    favManagerEmpty.classList.toggle('hidden', favorites.length > 0);
+    btnFavSort.disabled = favorites.length < 2;
+
+    favorites.forEach((fav, index) => {
+      const row = document.createElement('div');
+      row.className = 'fav-row';
+      row.classList.toggle('is-active', fav.isActive);
+      row.classList.toggle('is-missing', !fav.exists);
+
+      const text = document.createElement('div');
+      text.className = 'fav-row-text';
+      text.title = fav.exists ? fav.path : `File not found: ${fav.path}`;
+      const name = document.createElement('span');
+      name.className = 'fav-row-name';
+      name.textContent = fav.name;
+      const filePath = document.createElement('span');
+      filePath.className = 'fav-row-path';
+      filePath.textContent = shortFolder(fav.path);
+      text.append(name, filePath);
+
+      const isFirst = index === 0;
+      row.append(
+        text,
+        favIconButton('i-arrow-top', 'Move to the top', () => moveFavorite(index, 0), isFirst),
+        favIconButton('i-arrow-up', 'Move up one', () => moveFavorite(index, index - 1), isFirst),
+        favIconButton('i-x', 'Remove from favorites (the file is kept)', () => removeFavorite(fav))
+      );
+      row.lastChild.classList.add('is-remove');
+      favManagerList.appendChild(row);
+    });
+  }
+
+  async function saveFavoriteOrder(paths) {
+    const res = await api.reorderFavorites(paths);
+    applyState(res.state, false);
+  }
+
+  function moveFavorite(from, to) {
+    const paths = currentState.favorites.map((fav) => fav.path);
+    const [moved] = paths.splice(from, 1);
+    paths.splice(to, 0, moved);
+    saveFavoriteOrder(paths);
+  }
+
   function setSaveStatus(text, stateClass) {
     saveIndicator.textContent = text;
     saveIndicator.classList.remove('is-saving', 'is-error');
@@ -492,6 +565,14 @@
 
     // Clicking another window closes the menu (and shrinks the slim bar back)
     window.addEventListener('blur', () => closeNoteMenu());
+
+    // 5a. Setup: sort favorites A–Z by name (numbers in natural order: "Note 2" before "Note 10")
+    btnFavSort.addEventListener('click', () => {
+      const sorted = [...currentState.favorites].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true })
+      );
+      saveFavoriteOrder(sorted.map((fav) => fav.path));
+    });
 
     // 5b. Open Visual Setup Panel
     btnSettings.addEventListener('click', openVisualSetupPanel);

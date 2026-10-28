@@ -202,6 +202,22 @@ class VaultBridge {
     return { ok: true };
   }
 
+  // New order from Setup (arrows or A–Z). Only paths already in the list count; any left out keep their place at the end
+  reorderFavorites(orderedPaths) {
+    const favorites = this.settingsStore.get('favoriteNotes') || [];
+    const byKey = new Map(favorites.map((p) => [this._pathKey(p), p]));
+    const next = [];
+    (orderedPaths || []).forEach((p) => {
+      const key = this._pathKey(String(p));
+      if (byKey.has(key)) {
+        next.push(byKey.get(key));
+        byKey.delete(key);
+      }
+    });
+    this.settingsStore.update({ favoriteNotes: [...next, ...byKey.values()] });
+    return { ok: true };
+  }
+
   switchToFavorite(filePath) {
     if (!fs.existsSync(filePath)) {
       return { ok: false, error: 'File not found. It may have been moved or renamed.' };
