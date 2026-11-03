@@ -143,10 +143,13 @@ class VaultBridge {
    * OR type a new .md filename inside their Obsidian Vault folder.
    */
   async browseNoteFile(parentWindow) {
+    // Open in the current note's folder with an empty File name box. Passing the full file path
+    // pre-filled its name, so every other folder answered "doesn't exist, create it?" (promptToCreate)
     const currentPath = this.settingsStore.get('activeNotePath');
+    const startDir = currentPath ? path.dirname(currentPath) : '';
     const result = await dialog.showOpenDialog(parentWindow, {
       title: 'Select Your Single Obsidian Note (.md)',
-      defaultPath: currentPath || undefined,
+      defaultPath: startDir && fs.existsSync(startDir) ? startDir : undefined,
       buttonLabel: 'Select .md Note',
       filters: [{ name: 'Markdown Note (*.md)', extensions: ['md'] }],
       properties: ['openFile', 'promptToCreate'],

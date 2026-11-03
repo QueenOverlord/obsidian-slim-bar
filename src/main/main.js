@@ -23,6 +23,9 @@ let themeStore = null;
 let isSavingBounds = false;
 let isQuitting = false;
 
+// Narrowest the bar can be dragged (slim and expanded); styles.css has matching narrow steps
+const MIN_WIDTH = 200;
+
 // Keep settings in %APPDATA%\obsidian-slim-bar for both the installed app and the source folder,
 // so installing doesn't lose your note path or hotkey
 app.setPath('userData', path.join(app.getPath('appData'), 'obsidian-slim-bar'));
@@ -45,7 +48,7 @@ function createMainWindow() {
     settingsStore.update({ isExpanded: true });
   }
 
-  const winWidth = settings.windowWidth || 560;
+  const winWidth = Math.max(MIN_WIDTH, settings.windowWidth || 560);
   const winHeight = startExpanded ? settings.expandedHeight : settings.slimHeight;
   const defaultX = Math.round((screenWidth - winWidth) / 2);
 
@@ -54,7 +57,7 @@ function createMainWindow() {
     height: winHeight,
     x: settings.windowX !== null ? settings.windowX : defaultX,
     y: settings.windowY !== null ? settings.windowY : 24,
-    minWidth: 260,
+    minWidth: MIN_WIDTH,
     minHeight: settings.slimHeight,
     frame: false,
     transparent: true,
@@ -214,7 +217,7 @@ function setExpandedState(forceExpanded) {
   const targetHeight = nextExpanded ? settings.expandedHeight : settings.slimHeight;
 
   isSavingBounds = true;
-  mainWindow.setMinimumSize(360, settings.slimHeight);
+  mainWindow.setMinimumSize(MIN_WIDTH, settings.slimHeight);
   mainWindow.setBounds(
     {
       x: bounds.x,

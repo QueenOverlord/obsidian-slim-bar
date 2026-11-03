@@ -13,7 +13,7 @@ Press a hotkey from anywhere, type a thought, press `Enter`. It lands in your no
 - **Live sync:** saves as you type and picks up edits you make in Obsidian.
 - **Pin on top:** keep it above every window, or let it sit behind like a normal app.
 - **Opacity slider:** fade the bar so it doesn't cover what you're working on.
-- **Themes:** Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira, or Auto to follow Windows. Headings, links, code and tasks each get their own color.
+- **Themes:** Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira, Persona 5 Royal, Cassette (retro tape), Howl's Castle, Iris Garden (Monet), or Auto to follow Windows. Headings, links, code and tasks each get their own color.
 - **Your own themes, as many as you want:** make them in the app by picking colors or pasting hex codes, or bring your own snippets as `.css` files. You can also edit the files directly. See [Your own themes](#your-own-themes).
 - **Starts with Windows** (optional), so the hotkey is always ready.
 

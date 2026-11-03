@@ -1,6 +1,6 @@
 /**
  * Theme Manager — picks the active token block in styles.css via <html data-theme="…">.
- * 1. Built-in themes: Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira ("system" = Auto, follows Windows)
+ * 1. Built-in themes: Dark, Light, Dracula, Solarized Light, DedSec, Cyberpunk 2077, Akira, Persona 5 Royal, Cassette, Howl's Castle, Iris Garden ("system" = Auto, follows Windows)
  * 2. Your own themes ("user:<file>.css"): the file's 12 basic colors become --c-* variables that the
  *    [data-theme="custom"] block mixes the surfaces from; any full token in the file (--bg-elevated …) wins over the mix.
  */
@@ -24,7 +24,7 @@
     { key: 'done', label: 'Done tasks', token: '--md-done' },
   ];
 
-  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'cyberpunk', 'akira'];
+  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'cyberpunk', 'akira', 'p5r', 'cassette', 'howl', 'iris'];
 
   let current = { theme: 'system', userThemes: [] };
 

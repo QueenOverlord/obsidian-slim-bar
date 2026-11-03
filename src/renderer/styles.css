@@ -359,6 +359,193 @@
   --danger-text: #b81d23;
 }
 
+/* Persona 5 Royal: ink-black panels, parchment text, the Phantom Thieves' red for anything you act on,
+   sunbeam yellow for structure (H2, links, bold). Red and yellow never sit on top of each other. */
+[data-theme="p5r"] {
+  color-scheme: dark;
+
+  --bg-primary: #0d1215;
+  --bg-secondary: #14181c;
+  --bg-elevated: #1d2024;
+  --bg-raised: #1d2024;
+  --bg-input: #14181c;
+  --bg-hover: rgba(248, 245, 240, 0.07);
+  --bg-hover-soft: rgba(248, 245, 240, 0.03);
+
+  --border-subtle: rgba(70, 68, 73, 0.55);
+  --border-strong: #464449;
+  --border-focus: #ff1717;
+
+  --accent: #ff1717;
+  --accent-hover: #ff3b3b;
+  --accent-soft: rgba(255, 23, 23, 0.14);
+  --accent-ring: rgba(255, 23, 23, 0.4);
+  --accent-text: #ff4a4a;
+  --selection: rgba(255, 23, 23, 0.3);
+  --on-accent: #f8f5f0;
+
+  --text-main: #f8f5f0;
+  --text-muted: #c9c4bd;
+  --text-dim: #8b8790;
+
+  --md-h1: #ff1717;
+  --md-h2: #ffe612;
+  --md-h3: #f8f5f0;
+  --md-bold: #ffe612;
+  --md-italic: #e4dfd7;
+  --md-link: #ffe612;
+  --md-code: #ff4a4a;
+  --md-bullet: #ff1717;
+  --md-done: #8b8790;
+  --md-quote: #a9a5ad;
+
+  --success: #ffe612;
+  --success-ring: rgba(255, 230, 18, 0.3);
+  --warning: #ffe612;
+  --warning-soft: rgba(255, 230, 18, 0.12);
+  --danger: #ff1717;
+  --danger-soft: rgba(255, 23, 23, 0.16);
+  --danger-text: #ff6b6b;
+}
+
+/* Cassette: black tape body, cream label, the orange/mustard/teal/pink of 80s tape and VHS sleeves */
+[data-theme="cassette"] {
+  color-scheme: dark;
+
+  --bg-primary: #171717;
+  --bg-secondary: #1f1f1f;
+  --bg-elevated: #292929;
+  --bg-raised: #292929;
+  --bg-input: #1f1f1f;
+  --bg-hover: rgba(241, 230, 208, 0.07);
+  --bg-hover-soft: rgba(241, 230, 208, 0.03);
+
+  --border-subtle: rgba(241, 230, 208, 0.1);
+  --border-strong: rgba(241, 230, 208, 0.22);
+  --border-focus: #f26a1b;
+
+  --accent: #f26a1b;
+  --accent-hover: #f5843f;
+  --accent-soft: rgba(242, 106, 27, 0.15);
+  --accent-ring: rgba(242, 106, 27, 0.4);
+  --accent-text: #f7894a;
+  --selection: rgba(242, 106, 27, 0.3);
+  --on-accent: #1c1814;
+
+  --text-main: #f1e6d0;
+  --text-muted: #cfc2a8;
+  --text-dim: #8a7f70;
+
+  --md-h1: #f26a1b;
+  --md-h2: #f5b82e;
+  --md-h3: #3fa7c9;
+  --md-bold: #ef5b7a;
+  --md-italic: #cfc2a8;
+  --md-link: #3fa7c9;
+  --md-code: #f5b82e;
+  --md-bullet: #e0322b;
+  --md-done: #8a7f70;
+  --md-quote: #a99c86;
+
+  --success: #3fa7c9;
+  --success-ring: rgba(63, 167, 201, 0.3);
+  --danger: #e0322b;
+  --danger-soft: rgba(224, 50, 43, 0.16);
+  --danger-text: #ff6b5e;
+}
+
+/* Howl's Castle: night sky over the wildflower fields (Ghibli palette: Cotton Cloud, Misty, Totoro, Ponyo, Bright, Grassy Field) */
+[data-theme="howl"] {
+  color-scheme: dark;
+
+  --bg-primary: #0f1e26;
+  --bg-secondary: #15272f;
+  --bg-elevated: #1d323c;
+  --bg-raised: #1d323c;
+  --bg-input: #15272f;
+  --bg-hover: rgba(240, 238, 221, 0.07);
+  --bg-hover-soft: rgba(240, 238, 221, 0.03);
+
+  --border-subtle: rgba(193, 210, 208, 0.12);
+  --border-strong: rgba(193, 210, 208, 0.24);
+  --border-focus: #376e8c;
+
+  --accent: #376e8c;
+  --accent-hover: #45829f;
+  --accent-soft: rgba(111, 168, 199, 0.16);
+  --accent-ring: rgba(111, 168, 199, 0.4);
+  --accent-text: #6fa8c7;
+  --selection: rgba(111, 168, 199, 0.3);
+  --on-accent: #f0eedd;
+
+  --text-main: #f0eedd;
+  --text-muted: #c1d2d0;
+  --text-dim: #7d8f9b;
+
+  --md-h1: #ea8987;
+  --md-h2: #81b857;
+  --md-h3: #c1d2d0;
+  --md-bold: #ea8987;
+  --md-italic: #c1d2d0;
+  --md-link: #6fa8c7;
+  --md-code: #81b857;
+  --md-bullet: #ea8987;
+  --md-done: #7d8f9b;
+  --md-quote: #a3b5b8;
+
+  --success: #81b857;
+  --success-ring: rgba(129, 184, 87, 0.3);
+  --danger: #ea8987;
+  --danger-soft: rgba(234, 137, 135, 0.16);
+  --danger-text: #f2a5a3;
+}
+
+/* Iris Garden (Monet): violet-brown shade, Mountbatten pink, moss, moonstone (Caput Mortuum and Violet as the dark tones) */
+[data-theme="iris"] {
+  color-scheme: dark;
+
+  --bg-primary: #1f1622;
+  --bg-secondary: #2a1e2d;
+  --bg-elevated: #352638;
+  --bg-raised: #352638;
+  --bg-input: #2a1e2d;
+  --bg-hover: rgba(234, 221, 227, 0.07);
+  --bg-hover-soft: rgba(234, 221, 227, 0.03);
+
+  --border-subtle: rgba(164, 131, 146, 0.16);
+  --border-strong: rgba(164, 131, 146, 0.3);
+  --border-focus: #5c9aa6;
+
+  --accent: #5c9aa6;
+  --accent-hover: #6eaab5;
+  --accent-soft: rgba(92, 154, 166, 0.16);
+  --accent-ring: rgba(92, 154, 166, 0.4);
+  --accent-text: #7fb6c0;
+  --selection: rgba(102, 61, 101, 0.55);
+  --on-accent: #1f1622;
+
+  --text-main: #eadde3;
+  --text-muted: #c8b6bf;
+  --text-dim: #8c7a85;
+
+  --md-h1: #b892a3;
+  --md-h2: #9c9a4e;
+  --md-h3: #a77aa6;
+  --md-bold: #b892a3;
+  --md-italic: #a77aa6;
+  --md-link: #7fb6c0;
+  --md-code: #9c9a4e;
+  --md-bullet: #b5574e;
+  --md-done: #8c7a85;
+  --md-quote: #b3a2ab;
+
+  --success: #9c9a4e;
+  --success-ring: rgba(156, 154, 78, 0.3);
+  --danger: #b5574e;
+  --danger-soft: rgba(181, 87, 78, 0.18);
+  --danger-text: #d97a70;
+}
+
 /* Custom: theme-manager.js sets the --c-* colors the user pasted; the surfaces are mixed from them */
 [data-theme="custom"] {
   --bg-primary: var(--c-bg);
@@ -887,6 +1074,19 @@ body.mode-expanded .expand-btn .icon {
   .quick-capture-wrap { margin: 0 2px; }
 }
 
+/* Narrowest (down to the 200px window minimum in main.js): the input, expand, ⋯ and hide stay */
+@container bar (max-width: 260px) {
+  .slim-bar { padding: 0 3px 0 1px; gap: 1px; }
+  .drag-handle { width: 8px; }
+  .note-pill { width: 18px; min-width: 18px; }
+  .quick-capture-wrap { min-width: 56px; margin: 0 1px; }
+  .quick-capture-input { padding: 0 7px; }
+  .bar-actions { gap: 0; }
+  .icon-btn { width: 26px; }
+  /* ⋯ open: the note dot steps aside too, so all six buttons fit */
+  .slim-bar.overflow-open .note-pill { display: none; }
+}
+
 /* ==================== EXPANDED WORKSPACE ==================== */
 body.mode-slim .expanded-workspace {
   display: none;
@@ -1039,6 +1239,18 @@ body.mode-slim .expanded-workspace {
   .mode-switch-btn { padding: 0 5px; }
 }
 
+.md-narrow-only { display: none; }
+.md-menu-glyph { width: 16px; text-align: center; font-weight: 700; }
+
+@container toolbar (max-width: 250px) {
+  .md-wide-only { display: none; }
+  .md-narrow-only { display: inline-flex; }
+  .md-btn { min-width: 22px; padding: 0 3px; }
+  /* The menu anchors to the toolbar's left edge so it stays inside the window */
+  .md-more { position: static; }
+  .md-more-menu { left: 4px; right: auto; top: 32px; }
+}
+
 /* ==================== EDITOR CONTAINER ==================== */
 .editor-container {
   flex: 1;
@@ -1096,6 +1308,21 @@ body.mode-slim .expanded-workspace {
 /* Cyberpunk extras: yellow glow on H1, cyan cursor */
 [data-theme="cyberpunk"] .editor-host .cm-line.cm-lp-h1 { text-shadow: 0 0 12px rgba(242, 233, 0, 0.3); }
 [data-theme="cyberpunk"] .editor-host .cm-cursor { border-left: 2px solid #02d7f2; }
+
+/* Persona 5 Royal extras: heavy slanted headings like the menu lettering, red cursor */
+[data-theme="p5r"] .editor-host .cm-line.cm-lp-h1 { font-weight: 900; font-style: italic; letter-spacing: 0.02em; }
+[data-theme="p5r"] .editor-host .cm-line.cm-lp-h2 { font-weight: 800; font-style: italic; }
+[data-theme="p5r"] .editor-host .cm-cursor { border-left: 2px solid #ff1717; }
+
+/* Cassette extras: the label's rainbow stripe under the bar */
+[data-theme="cassette"] .slim-bar {
+  background:
+    linear-gradient(90deg, #e0322b 0 25%, #f26a1b 25% 50%, #f5b82e 50% 75%, #3fa7c9 75%) bottom / 100% 3px no-repeat,
+    var(--bg-primary);
+}
+
+/* Iris Garden extras: quotes get a moss-green bar, like reeds at the edge of the pond */
+[data-theme="iris"] .editor-host .cm-line.cm-lp-quote { border-left-color: #9c9a4e; }
 
 /* Akira extras: heavy black H1 like the poster lettering */
 [data-theme="akira"] .editor-host .cm-line.cm-lp-h1 { font-weight: 900; letter-spacing: 0.01em; }
@@ -1349,6 +1576,8 @@ body.mode-slim .expanded-workspace {
 }
 [data-theme="cyberpunk"] .editor-host .cm-line.cm-lp-codeblock { box-shadow: inset 2px 0 0 #f2e900; }
 [data-theme="akira"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(172, 211, 228, 0.45); }
+[data-theme="p5r"] .editor-host .cm-line.cm-lp-codeblock { box-shadow: inset 3px 0 0 #ff1717; }
+[data-theme="howl"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(193, 210, 208, 0.08); }
 
 /* ==================== SETUP PANEL ==================== */
 .overlay-panel {
@@ -1757,6 +1986,18 @@ kbd {
   width: 32px;
   padding: 0;
   justify-content: center;
+}
+
+/* Very narrow window (down to 200px): tighter Setup so the cards keep their room */
+@media (max-width: 260px) {
+  .overlay-panel { padding: 8px; gap: 8px; }
+  .setup-card { padding: 8px; }
+  .theme-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+}
+
+@container setup (max-width: 200px) {
+  .file-picker-row { flex-wrap: wrap; }
+  .file-picker-row > :first-child { flex: 1 1 100%; }
 }
 
 @container setup (max-width: 360px) {

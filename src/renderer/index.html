@@ -247,6 +247,34 @@
               </span>
               <span class="swatch-label">Akira</span>
             </button>
+            <button class="theme-swatch" data-theme-pick="p5r" type="button" role="radio" title="Persona 5 Royal">
+              <span class="swatch-preview" data-theme="p5r">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">P5 Royal</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="cassette" type="button" role="radio" title="Cassette (retro tape)">
+              <span class="swatch-preview" data-theme="cassette">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Cassette</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="howl" type="button" role="radio" title="Howl's Moving Castle">
+              <span class="swatch-preview" data-theme="howl">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Howl's Castle</span>
+            </button>
+            <button class="theme-swatch" data-theme-pick="iris" type="button" role="radio" title="Iris Garden (Monet)">
+              <span class="swatch-preview" data-theme="iris">
+                <span class="swatch-aa">Aa</span>
+                <span class="swatch-dots"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="swatch-label">Iris Garden</span>
+            </button>
           </div>
 
           <!-- Your own themes: one .css file each in the themes folder (theme-store.js) -->
@@ -316,9 +344,9 @@
       <div class="md-toolbar">
         <div class="md-tools-left">
           <button class="md-btn md-text" data-md="h1" title="Heading 1">H1</button>
-          <button class="md-btn md-text" data-md="h2" title="Heading 2">H2</button>
+          <button class="md-btn md-text md-wide-only" data-md="h2" title="Heading 2">H2</button>
           <button class="md-btn md-text" data-md="bold" title="Bold"><b>B</b></button>
-          <button class="md-btn md-text" data-md="italic" title="Italic"><i>I</i></button>
+          <button class="md-btn md-text md-wide-only" data-md="italic" title="Italic"><i>I</i></button>
           <span class="md-sep"></span>
           <button class="md-btn" data-md="task" title="Task (- [ ] )">
             <svg class="icon"><use href="#i-task"/></svg>
@@ -339,6 +367,13 @@
               <svg class="icon"><use href="#i-more"/></svg>
             </button>
             <div id="md-more-menu" class="md-more-menu hidden">
+              <!-- These two only appear in the menu when the bar is very narrow -->
+              <button class="md-btn md-menu-item md-narrow-only" data-md="h2">
+                <span class="md-menu-glyph">H2</span><span>Heading 2</span>
+              </button>
+              <button class="md-btn md-menu-item md-narrow-only" data-md="italic">
+                <span class="md-menu-glyph"><i>I</i></span><span>Italic</span>
+              </button>
               <button class="md-btn md-menu-item" data-md="time">
                 <svg class="icon"><use href="#i-clock"/></svg><span>Timestamp</span>
               </button>
