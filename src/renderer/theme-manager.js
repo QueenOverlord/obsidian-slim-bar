@@ -24,7 +24,7 @@
     { key: 'done', label: 'Done tasks', token: '--md-done' },
   ];
 
-  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'cyberpunk', 'akira', 'p5r', 'cassette', 'howl', 'iris'];
+  const THEMES = ['system', 'dark', 'light', 'dracula', 'solarized-light', 'dedsec', 'cyberpunk', 'akira', 'p5r', 'cassette', 'howl', 'iris', 'maomao'];
 
   let current = { theme: 'system', userThemes: [] };
 

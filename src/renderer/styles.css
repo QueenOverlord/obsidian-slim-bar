@@ -546,6 +546,52 @@
   --danger-text: #d97a70;
 }
 
+/* Maomao (The Apothecary Diaries): neutral gray room; lacquer red, Maomao's green robe, jade beams, gold, violet eyes */
+[data-theme="maomao"] {
+  color-scheme: dark;
+
+  --bg-primary: #262626;
+  --bg-secondary: #2e2e2e;
+  --bg-elevated: #383838;
+  --bg-raised: #383838;
+  --bg-input: #2e2e2e;
+  --bg-hover: rgba(243, 236, 214, 0.07);
+  --bg-hover-soft: rgba(243, 236, 214, 0.03);
+
+  --border-subtle: rgba(243, 236, 214, 0.1);
+  --border-strong: rgba(243, 236, 214, 0.2);
+  --border-focus: #b8403f;
+
+  --accent: #b8403f;
+  --accent-hover: #c95150;
+  --accent-soft: rgba(184, 64, 63, 0.18);
+  --accent-ring: rgba(184, 64, 63, 0.42);
+  --accent-text: #e0736b;
+  --selection: rgba(64, 155, 129, 0.38);
+  --on-accent: #f3ecd6;
+
+  --text-main: #f3ecd6;
+  --text-muted: #c9c3a8;
+  --text-dim: #8a8678;
+
+  --md-h1: #e2566a;
+  --md-h2: #8cbf4a;
+  --md-h3: #4fb39a;
+  --md-bold: #e7b85a;
+  --md-italic: #a98fd6;
+  --md-link: #4fb39a;
+  --md-code: #8cbf4a;
+  --md-bullet: #c25a8a;
+  --md-done: #8a8678;
+  --md-quote: #b9b3a0;
+
+  --success: #8cbf4a;
+  --success-ring: rgba(140, 191, 74, 0.3);
+  --danger: #e2566a;
+  --danger-soft: rgba(226, 86, 106, 0.18);
+  --danger-text: #ee8090;
+}
+
 /* Custom: theme-manager.js sets the --c-* colors the user pasted; the surfaces are mixed from them */
 [data-theme="custom"] {
   --bg-primary: var(--c-bg);
@@ -1321,6 +1367,15 @@ body.mode-slim .expanded-workspace {
     var(--bg-primary);
 }
 
+/* Maomao extras: painted palace beam under the bar (lacquer, gold, jade), green cursor, jade on code and quotes */
+[data-theme="maomao"] .slim-bar {
+  background:
+    linear-gradient(90deg, #b8403f 0 40%, #e7b85a 40% 46%, #409b81 46%) bottom / 100% 3px no-repeat,
+    var(--bg-primary);
+}
+[data-theme="maomao"] .editor-host .cm-cursor { border-left: 2px solid #8cbf4a; }
+[data-theme="maomao"] .editor-host .cm-line.cm-lp-quote { border-left-color: #409b81; }
+
 /* Iris Garden extras: quotes get a moss-green bar, like reeds at the edge of the pond */
 [data-theme="iris"] .editor-host .cm-line.cm-lp-quote { border-left-color: #9c9a4e; }
 
@@ -1575,6 +1630,7 @@ body.mode-slim .expanded-workspace {
   box-shadow: inset 1px -1px 0 rgba(189, 255, 37, 0.25), inset -1px 0 0 rgba(189, 255, 37, 0.25);
 }
 [data-theme="cyberpunk"] .editor-host .cm-line.cm-lp-codeblock { box-shadow: inset 2px 0 0 #f2e900; }
+[data-theme="maomao"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(64, 155, 129, 0.12); }
 [data-theme="akira"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(172, 211, 228, 0.45); }
 [data-theme="p5r"] .editor-host .cm-line.cm-lp-codeblock { box-shadow: inset 3px 0 0 #ff1717; }
 [data-theme="howl"] .editor-host .cm-line.cm-lp-codeblock { background: rgba(193, 210, 208, 0.08); }

@@ -52,11 +52,19 @@ function createMainWindow() {
   const winHeight = startExpanded ? settings.expandedHeight : settings.slimHeight;
   const defaultX = Math.round((screenWidth - winWidth) / 2);
 
+  // The saved spot can be on a monitor that was unplugged or moved: then start on the main monitor
+  let startX = settings.windowX !== null ? settings.windowX : defaultX;
+  let startY = settings.windowY !== null ? settings.windowY : 24;
+  if (!isBarOnScreen({ x: startX, y: startY, width: winWidth })) {
+    ({ x: startX, y: startY } = defaultPosition(winWidth));
+    settingsStore.update({ windowX: startX, windowY: startY });
+  }
+
   mainWindow = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    x: settings.windowX !== null ? settings.windowX : defaultX,
-    y: settings.windowY !== null ? settings.windowY : 24,
+    x: startX,
+    y: startY,
     minWidth: MIN_WIDTH,
     minHeight: settings.slimHeight,
     frame: false,
@@ -122,6 +130,37 @@ function createMainWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+}
+
+// True when enough of the slim bar (the top strip you drag) is on some monitor to see and grab it
+function isBarOnScreen({ x, y, width }) {
+  const barHeight = (settingsStore && settingsStore.get('slimHeight')) || 44;
+  const needWidth = Math.min(80, width);
+  const needHeight = Math.min(20, barHeight);
+  return screen.getAllDisplays().some(({ workArea: a }) => {
+    const overlapW = Math.min(x + width, a.x + a.width) - Math.max(x, a.x);
+    const overlapH = Math.min(y + barHeight, a.y + a.height) - Math.max(y, a.y);
+    return overlapW >= needWidth && overlapH >= needHeight;
+  });
+}
+
+// Centered near the top of the main monitor, like the very first launch
+function defaultPosition(width) {
+  const { workArea: a } = screen.getPrimaryDisplay();
+  return {
+    x: a.x + Math.round((a.width - width) / 2),
+    y: a.y + 24,
+  };
+}
+
+// Brings the window back to the main monitor if it ended up where no screen is
+function keepWindowOnScreen() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const bounds = mainWindow.getBounds();
+  if (isBarOnScreen(bounds)) return;
+  const { x, y } = defaultPosition(bounds.width);
+  mainWindow.setBounds({ ...bounds, x, y });
+  settingsStore.update({ windowX: x, windowY: y });
 }
 
 function saveWindowBounds() {
@@ -277,6 +316,7 @@ function summonBar() {
 
   // Case 1: Window was hidden or in background -> Summon to front, expand, and focus!
   if (!wasVisible || !wasFocused) {
+    keepWindowOnScreen();
     mainWindow.show();
     if (mainWindow.isMinimized()) mainWindow.restore();
     applyPinState(Boolean(settingsStore.get('isPinned')));
@@ -652,6 +692,12 @@ function onReady() {
   createMainWindow();
   createSystemTray();
   registerGlobalHotkeys();
+
+  // Unplugging or rearranging monitors can leave the bar where no screen is: bring it back
+  const onDisplaysChanged = () => setTimeout(keepWindowOnScreen, 300);
+  screen.on('display-removed', onDisplaysChanged);
+  screen.on('display-added', onDisplaysChanged);
+  screen.on('display-metrics-changed', onDisplaysChanged);
 }
 
 // Up to v1.4 there was one Custom theme kept in settings: it becomes the file "Custom.css"
